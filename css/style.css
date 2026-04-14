@@ -158,12 +158,17 @@ ul  { list-style: none; }
   transform: translateY(-6.5px) rotate(-45deg);
 }
 
-/* Mobile drawer */
+/* Mobile drawer — fixed below the navbar */
 .nav-drawer {
   display: none;
+  position: fixed;
+  top: var(--nav-h);
+  left: 0;
+  right: 0;
+  z-index: 99;
   flex-direction: column;
   background: var(--color-surface);
-  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
   padding: 12px 24px 20px;
   gap: 2px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.06);
