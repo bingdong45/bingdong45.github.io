@@ -252,6 +252,61 @@ ul {
 }
 
 /* ========================================
+   Projects
+   ======================================== */
+.project-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 36px 40px;
+  background: var(--color-surface);
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.project-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.project-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.project-tag {
+  padding: 3px 10px;
+  background: var(--color-bg);
+  color: var(--color-text-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.project-title {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+
+.project-desc {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.75;
+  max-width: 600px;
+  margin-bottom: 24px;
+}
+
+.project-btn {
+  font-size: 0.82rem;
+}
+
+/* ========================================
    Contact
    ======================================== */
 .contact-container {
