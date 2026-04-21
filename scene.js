@@ -112,31 +112,31 @@ window.Classroom = (function () {
     const C = (window.CONTENT && window.CONTENT.whiteboard) || {};
     const items = (C.items || []).slice(0, 5);
     return makeCanvasTexture(2048, 1024, (ctx, W, H) => {
-      // base
-      ctx.fillStyle = '#f8f4e8';
+      // chalkboard green base
+      ctx.fillStyle = '#2d5a27';
       ctx.fillRect(0, 0, W, H);
-      // ghost marker stains
-      for (let i = 0; i < 25; i++) {
-        ctx.strokeStyle = `rgba(80, 80, 80, ${0.04 + Math.random() * 0.05})`;
-        ctx.lineWidth = 2 + Math.random() * 8;
+      // chalk smear ghosts
+      for (let i = 0; i < 30; i++) {
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.03 + Math.random() * 0.06})`;
+        ctx.lineWidth = 3 + Math.random() * 12;
         ctx.beginPath();
         const sx = Math.random() * W, sy = Math.random() * H;
         ctx.moveTo(sx, sy);
-        ctx.bezierCurveTo(sx + 100, sy + 20, sx + 200, sy - 30, sx + 300 * Math.random(), sy + 50 * Math.random());
+        ctx.bezierCurveTo(sx + 120, sy + 20, sx + 220, sy - 30, sx + 320 * Math.random(), sy + 60 * Math.random());
         ctx.stroke();
       }
 
-      // Title at top — handwritten
-      ctx.fillStyle = '#1a1510';
-      ctx.font = '88px "Patrick Hand", cursive';
+      // Title at top — chalk handwritten
+      ctx.fillStyle = '#f0ebe0';
+      ctx.font = '96px "Patrick Hand", cursive';
       ctx.textBaseline = 'top';
-      ctx.fillText('Today:', 80, 40);
-      ctx.fillStyle = accentColor;
-      ctx.font = 'italic 72px "Caveat", cursive';
-      ctx.fillText(C.title || 'things I\'ve been working on', 310, 60);
+      ctx.fillText('Experience:', 80, 40);
+      ctx.fillStyle = '#f5e090';
+      ctx.font = '78px "Patrick Hand", cursive';
+      ctx.fillText(C.title || 'things I\'ve been working on', 370, 44);
 
-      // divider line — marker feel
-      ctx.strokeStyle = '#2a2520';
+      // divider — chalk line
+      ctx.strokeStyle = 'rgba(240,235,224,0.55)';
       ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.moveTo(80, 180);
@@ -154,8 +154,8 @@ window.Classroom = (function () {
 
       items.forEach((it, i) => {
         const z = slots[i]; if (!z) return;
-        // rectangle - sketchy
-        ctx.strokeStyle = i % 2 ? accentColor : '#1a1510';
+        // rectangle - sketchy chalk
+        ctx.strokeStyle = i % 2 ? '#f5e090' : 'rgba(240,235,224,0.7)';
         ctx.lineWidth = 4;
         ctx.beginPath();
         const jitter = () => (Math.random() - 0.5) * 3;
@@ -167,21 +167,21 @@ window.Classroom = (function () {
         ctx.stroke();
 
         // title (truncate if too long)
-        ctx.fillStyle = '#1a1510';
-        ctx.font = '44px "Patrick Hand", cursive';
+        ctx.fillStyle = '#f0ebe0';
+        ctx.font = '50px "Patrick Hand", cursive';
         const titleText = `${it.num || String(i+1).padStart(2, '0')}  ${it.title}`;
         const titleLines = wrapText(ctx, titleText, z.w - 40);
         titleLines.slice(0, 2).forEach((ln, li) =>
           ctx.fillText(ln, z.x + 22, z.y + 20 + li * 46));
 
         // tag
-        ctx.fillStyle = accentColor;
-        ctx.font = '22px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#f5e090';
+        ctx.font = '24px "JetBrains Mono", monospace';
         ctx.fillText((it.meta || '').toLowerCase(), z.x + 22, z.y + Math.min(120, 20 + titleLines.length * 46 + 14));
 
         // note (short desc, wrapped)
-        ctx.fillStyle = 'rgba(26,21,16,0.78)';
-        ctx.font = '32px "Caveat", cursive';
+        ctx.fillStyle = 'rgba(240,235,224,0.88)';
+        ctx.font = '34px "Patrick Hand", cursive';
         const noteLines = wrapText(ctx, it.desc || '', z.w - 40);
         const noteTop = z.y + Math.min(165, 20 + titleLines.length * 46 + 58);
         const maxLines = Math.floor((z.h - (noteTop - z.y) - 60) / 40);
@@ -197,8 +197,8 @@ window.Classroom = (function () {
         ctx.stroke();
 
         // click indicator
-        ctx.fillStyle = accentColor;
-        ctx.font = '22px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#f5e090';
+        ctx.font = '24px "JetBrains Mono", monospace';
         ctx.fillText('→ open', z.x + z.w - 140, z.y + z.h - 40);
       });
     });
@@ -214,67 +214,79 @@ window.Classroom = (function () {
     let name = fullTitle;
     const m = fullTitle.match(/^([^,]+,)\s*(.+)$/);
     if (m) { greeting = m[1].toLowerCase(); name = m[2]; }
-    return makeCanvasTexture(1024, 1280, (ctx, W, H) => {
-      ctx.fillStyle = '#f8f4e8';
+    return makeCanvasTexture(1280, 1600, (ctx, W, H) => {
+      // chalkboard green
+      ctx.fillStyle = '#2d5a27';
       ctx.fillRect(0, 0, W, H);
+      // chalk dust smears
+      for (let i = 0; i < 20; i++) {
+        ctx.strokeStyle = `rgba(255,255,255,${0.02 + Math.random() * 0.05})`;
+        ctx.lineWidth = 4 + Math.random() * 14;
+        ctx.beginPath();
+        const sx = Math.random() * W, sy = Math.random() * H;
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx + 180 * (Math.random() - 0.5), sy + 60 * (Math.random() - 0.5));
+        ctx.stroke();
+      }
 
-      // HELLO header
-      ctx.fillStyle = accentColor;
-      ctx.font = '120px "Patrick Hand", cursive';
-      ctx.fillText(greeting, 60, 140);
+      // greeting header — chalk yellow
+      ctx.fillStyle = '#f5e090';
+      ctx.font = '150px "Patrick Hand", cursive';
+      ctx.fillText(greeting, 60, 165);
 
-      ctx.fillStyle = '#1a1510';
-      ctx.font = '110px "Patrick Hand", cursive';
-      ctx.fillText(name, 60, 270);
+      // name — chalk white
+      ctx.fillStyle = '#f0ebe0';
+      ctx.font = '140px "Patrick Hand", cursive';
+      ctx.fillText(name, 60, 320);
 
       // underline
-      ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#f5e090';
+      ctx.lineWidth = 7;
       ctx.beginPath();
-      ctx.moveTo(60, 300);
-      ctx.lineTo(580, 305);
+      ctx.moveTo(60, 352);
+      ctx.lineTo(960, 358);
       ctx.stroke();
 
-      // role line
-      ctx.fillStyle = 'rgba(26,21,16,0.75)';
-      ctx.font = '42px "Caveat", cursive';
-      const subLines = wrapText(ctx, C.sub || P.role || '', W - 120);
-      subLines.slice(0, 3).forEach((line, i) => ctx.fillText(line, 60, 370 + i * 52));
+      // role / subtitle
+      ctx.fillStyle = 'rgba(240,235,224,0.78)';
+      ctx.font = '52px "Caveat", cursive';
+      const subLines = wrapText(ctx, C.sub || P.role || '', W - 130);
+      subLines.slice(0, 3).forEach((line, i) => ctx.fillText(line, 60, 430 + i * 60));
 
-      // body — first paragraph, wrapped short
-      ctx.fillStyle = 'rgba(26,21,16,0.85)';
-      ctx.font = '38px "Caveat", cursive';
+      // body — first paragraph
+      ctx.fillStyle = 'rgba(240,235,224,0.88)';
+      ctx.font = '48px "Caveat", cursive';
       const bodyText = (C.body && C.body[0]) || '';
-      const bodyLines = wrapText(ctx, bodyText, W - 120);
-      const bodyTop = 380 + subLines.length * 52 + 30;
-      const maxBodyLines = Math.floor((H - bodyTop - 180) / 48);
+      const bodyLines = wrapText(ctx, bodyText, W - 130);
+      const bodyTop = 440 + subLines.length * 60 + 28;
+      const maxBodyLines = Math.floor((H - bodyTop - 200) / 56);
       bodyLines.slice(0, maxBodyLines).forEach((line, i) =>
-        ctx.fillText(line, 60, bodyTop + i * 48));
+        ctx.fillText(line, 60, bodyTop + i * 56));
 
-      // little arrow
-      ctx.strokeStyle = '#1a1510';
+      // arrow + click cue
+      ctx.strokeStyle = '#f0ebe0';
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(60, H - 180);
-      ctx.lineTo(340, H - 180);
-      ctx.moveTo(320, H - 195);
-      ctx.lineTo(340, H - 180);
-      ctx.lineTo(320, H - 165);
+      ctx.moveTo(60, H - 195);
+      ctx.lineTo(380, H - 195);
+      ctx.moveTo(356, H - 213);
+      ctx.lineTo(380, H - 195);
+      ctx.lineTo(356, H - 177);
       ctx.stroke();
-      ctx.fillStyle = '#1a1510';
-      ctx.font = '48px "Patrick Hand", cursive';
-      ctx.fillText('click for more', 60, H - 130);
+      ctx.fillStyle = '#f0ebe0';
+      ctx.font = '58px "Patrick Hand", cursive';
+      ctx.fillText('click for more', 60, H - 135);
 
-      // click zone marker
-      ctx.strokeStyle = accentColor;
-      ctx.setLineDash([12, 10]);
+      // dashed border
+      ctx.strokeStyle = 'rgba(240,235,224,0.4)';
+      ctx.setLineDash([14, 11]);
       ctx.lineWidth = 4;
-      ctx.strokeRect(40, 60, W - 80, H - 150);
+      ctx.strokeRect(44, 50, W - 88, H - 160);
       ctx.setLineDash([]);
 
-      ctx.fillStyle = accentColor;
-      ctx.font = '36px "JetBrains Mono", monospace';
-      ctx.fillText('→ read', W - 220, H - 70);
+      ctx.fillStyle = '#f5e090';
+      ctx.font = '44px "JetBrains Mono", monospace';
+      ctx.fillText('→ read', W - 270, H - 72);
     });
   }
 
@@ -353,6 +365,65 @@ window.Classroom = (function () {
       ctx.fillStyle = accentColor;
       ctx.font = '36px "JetBrains Mono", monospace';
       ctx.fillText('→ reach out', W - 290, H - 70);
+    });
+  }
+
+  // contact ribbon card (horizontal banner with icon + text)
+  function contactRibbonTexture(label, value, iconType, bgColor) {
+    return makeCanvasTexture(720, 200, (ctx, W, H) => {
+      // card background
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, W, H);
+      // left icon zone (slightly darker)
+      const iconW = 200;
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.fillRect(0, 0, iconW, H);
+      // divider
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(iconW, 14); ctx.lineTo(iconW, H - 14); ctx.stroke();
+      // icon
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.88)';
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      const cx = iconW / 2, cy = H / 2, r = 44;
+      if (iconType === 'email') {
+        ctx.strokeRect(cx - r, cy - r * 0.64, r * 2, r * 1.28);
+        ctx.beginPath(); ctx.moveTo(cx - r, cy - r * 0.64); ctx.lineTo(cx, cy + r * 0.06); ctx.lineTo(cx + r, cy - r * 0.64); ctx.stroke();
+      } else if (iconType === 'github') {
+        ctx.beginPath(); ctx.arc(cx, cy - 4, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx - r * 0.38, cy + r * 0.32, r * 0.17, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + r * 0.38, cy + r * 0.32, r * 0.17, 0, Math.PI * 2); ctx.fill();
+      } else if (iconType === 'linkedin') {
+        ctx.font = `bold 88px "Patrick Hand", cursive`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('in', cx, cy);
+      } else if (iconType === 'website') {
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(cx, cy, r * 0.48, r, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy); ctx.stroke();
+      } else { // cv / document
+        ctx.strokeRect(cx - r * 0.62, cy - r, r * 1.24, r * 2);
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath(); ctx.moveTo(cx - r * 0.38, cy - r * 0.42 + i * r * 0.52); ctx.lineTo(cx + r * 0.38, cy - r * 0.42 + i * r * 0.52); ctx.stroke();
+        }
+      }
+      ctx.restore();
+      // label
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.font = '24px "JetBrains Mono", monospace';
+      ctx.textBaseline = 'top';
+      ctx.textAlign = 'left';
+      ctx.fillText(label.toUpperCase(), iconW + 22, 18);
+      // value
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 40px "Patrick Hand", cursive';
+      const lines = wrapText(ctx, value, W - iconW - 44);
+      lines.slice(0, 2).forEach((l, i) => ctx.fillText(l, iconW + 22, 60 + i * 46));
+      ctx.textBaseline = 'alphabetic';
     });
   }
 
@@ -786,49 +857,217 @@ window.Classroom = (function () {
 
     // ---- left small board (name) ----
     const leftBoardFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(1.3, 1.8, 0.1),
+      new THREE.BoxGeometry(1.7, 2.2, 0.1),
       new THREE.MeshLambertMaterial({ map: woodTexture(0) })
     );
-    leftBoardFrame.position.set(-3.4, 1.75, -roomD/2 + 0.06);
+    leftBoardFrame.position.set(-3.5, 1.85, -roomD/2 + 0.06);
     leftBoardFrame.castShadow = true;
     leftBoardFrame.receiveShadow = true;
     scene.add(leftBoardFrame);
 
     const leftBoardTex = nameBoardTexture(opts.accentHex);
     const leftBoard = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.2, 1.65),
+      new THREE.PlaneGeometry(1.6, 2.1),
       new THREE.MeshLambertMaterial({ map: leftBoardTex })
     );
-    leftBoard.position.set(-3.4, 1.75, -roomD/2 + 0.12);
+    leftBoard.position.set(-3.5, 1.85, -roomD/2 + 0.12);
     leftBoard.rotation.y = 0;
     leftBoard.userData.hit = 'leftboard';
     leftBoard.userData.label = 'About me';
     scene.add(leftBoard);
     interactive.push(leftBoard);
 
-    // ---- right small board (contact) ----
-    const rightBoardFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(1.3, 1.8, 0.1),
+    // ---- right wall: stacked ribbon cards with vertical connecting line ----
+    const C_contact = (window.CONTENT && window.CONTENT.rightboard) || {};
+    const contactEntries = (C_contact.contacts || []).slice(0, 5);
+    const ribbonCX = 3.45;        // center x — well right of whiteboard (ends at 2.4)
+    const ribbonZ  = -roomD / 2 + 0.14;
+    const ribbonW3 = 1.72, ribbonH3 = 0.30;
+    const ribbonTopY = 2.35;
+    const ribbonStep = 0.42;
+    const ribbonColors = ['#c0392b', '#1c2e4a', '#2471a3', '#1e8449', '#6c3483'];
+    const ribbonIcons  = ['email', 'github', 'linkedin', 'website', 'cv'];
+    const ribbonTilts  = [-0.065, 0.055, -0.045, 0.07, -0.04];
+
+    // vertical center line
+    const lineH = ribbonStep * (contactEntries.length - 1) + ribbonH3 * 2;
+    const lineMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.006, 0.006, lineH, 8),
+      new THREE.MeshStandardMaterial({ color: 0x1a1510, roughness: 0.5, metalness: 0.2 })
+    );
+    lineMesh.position.set(ribbonCX, ribbonTopY - lineH / 2 + ribbonH3 * 0.5, ribbonZ - 0.002);
+    scene.add(lineMesh);
+
+    // ribbon cards
+    contactEntries.forEach((c, i) => {
+      const cy = ribbonTopY - i * ribbonStep;
+      const tex = contactRibbonTexture(c.label, c.val, ribbonIcons[i] || 'email', ribbonColors[i % ribbonColors.length]);
+      const card = new THREE.Mesh(
+        new THREE.PlaneGeometry(ribbonW3, ribbonH3),
+        new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, metalness: 0.0 })
+      );
+      card.position.set(ribbonCX, cy, ribbonZ + 0.004);
+      card.rotation.z = ribbonTilts[i] || 0;
+      card.castShadow = true;
+      scene.add(card);
+    });
+
+    // invisible pick plane
+    const rightBoardTex = null;
+    const contactPick = new THREE.Mesh(
+      new THREE.PlaneGeometry(ribbonW3 + 0.2, lineH + 0.18),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false })
+    );
+    contactPick.position.set(ribbonCX, ribbonTopY - lineH / 2 + ribbonH3 * 0.5, ribbonZ + 0.01);
+    contactPick.userData.hit = 'rightboard';
+    contactPick.userData.label = 'Get in touch';
+    scene.add(contactPick);
+    interactive.push(contactPick);
+
+    // ---- teacher's desk — solid credenza style, close to viewer but against front-left wall ----
+    const teacherDesk = new THREE.Group();
+    teacherDesk.position.set(-2.2, 0, -roomD/2 + 1.3);
+    scene.add(teacherDesk);
+
+    const tdWoodMat = new THREE.MeshStandardMaterial({ map: woodTexture(0), roughness: 0.7, metalness: 0.0 });
+    const tdDarkMat = new THREE.MeshLambertMaterial({ color: 0x2e1d10 });
+
+    // wide desktop surface
+    const tdTop = new THREE.Mesh(
+      new THREE.BoxGeometry(2.0, 0.055, 0.85),
+      tdWoodMat
+    );
+    tdTop.position.y = 0.90;
+    tdTop.castShadow = true;
+    tdTop.receiveShadow = true;
+    teacherDesk.add(tdTop);
+    // front lip/modesty panel
+    const tdFront = new THREE.Mesh(
+      new THREE.BoxGeometry(2.0, 0.86, 0.04),
+      tdWoodMat
+    );
+    tdFront.position.set(0, 0.43, -0.405);
+    teacherDesk.add(tdFront);
+    // two solid side panels (no legs — solid cabinet base)
+    [-0.95, 0.95].forEach(x => {
+      const panel = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, 0.88, 0.82),
+        tdWoodMat
+      );
+      panel.position.set(x, 0.44, 0);
+      panel.castShadow = true;
+      panel.receiveShadow = true;
+      teacherDesk.add(panel);
+    });
+    // back panel (closes the cabinet)
+    const tdBack = new THREE.Mesh(
+      new THREE.BoxGeometry(1.88, 0.86, 0.04),
       new THREE.MeshLambertMaterial({ map: woodTexture(0) })
     );
-    rightBoardFrame.position.set(3.4, 1.75, -roomD/2 + 0.06);
-    rightBoardFrame.castShadow = true;
-    rightBoardFrame.receiveShadow = true;
-    scene.add(rightBoardFrame);
-
-    const rightBoardTex = contactBoardTexture(opts.accentHex);
-    const rightBoard = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.2, 1.65),
-      new THREE.MeshLambertMaterial({ map: rightBoardTex })
+    tdBack.position.set(0, 0.43, 0.4);
+    teacherDesk.add(tdBack);
+    // toe kick at the bottom
+    const tdKick = new THREE.Mesh(
+      new THREE.BoxGeometry(1.92, 0.08, 0.72),
+      tdDarkMat
     );
-    rightBoard.position.set(3.4, 1.75, -roomD/2 + 0.12);
-    rightBoard.rotation.y = 0;
-    rightBoard.userData.hit = 'rightboard';
-    rightBoard.userData.label = 'Contact';
-    scene.add(rightBoard);
-    interactive.push(rightBoard);
+    tdKick.position.set(0, 0.04, 0.05);
+    teacherDesk.add(tdKick);
+    // three drawer fronts on the lower section
+    [-0.55, 0, 0.55].forEach((x, i) => {
+      const drawer = new THREE.Mesh(
+        new THREE.BoxGeometry(0.56, 0.26, 0.02),
+        tdWoodMat
+      );
+      drawer.position.set(x, 0.50, -0.408);
+      teacherDesk.add(drawer);
+      // drawer pull (small bar handle)
+      const pull = new THREE.Mesh(
+        new THREE.BoxGeometry(0.12, 0.012, 0.012),
+        new THREE.MeshStandardMaterial({ color: 0x8a7a60, roughness: 0.3, metalness: 0.7 })
+      );
+      pull.position.set(x, 0.50, -0.425);
+      teacherDesk.add(pull);
+    });
+    // divider lines between drawers (thin strips)
+    [-0.275, 0.275].forEach(x => {
+      const div = new THREE.Mesh(
+        new THREE.BoxGeometry(0.008, 0.30, 0.02),
+        tdDarkMat
+      );
+      div.position.set(x, 0.50, -0.408);
+      teacherDesk.add(div);
+    });
+    // items on desk top
+    // grade stack
+    [0, 0.003, 0.006].forEach(dy => {
+      const sheet = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 0.002, 0.24),
+        new THREE.MeshLambertMaterial({ color: dy === 0 ? 0xfdfbf0 : 0xf0ecdf })
+      );
+      sheet.position.set(-0.6, 0.930 + dy, 0.1);
+      sheet.rotation.y = -0.06;
+      teacherDesk.add(sheet);
+    });
+    // open textbook
+    const tdBook = new THREE.Mesh(
+      new THREE.BoxGeometry(0.38, 0.025, 0.28),
+      new THREE.MeshLambertMaterial({ color: 0x3a5a7a })
+    );
+    tdBook.position.set(0.5, 0.927, 0.0);
+    tdBook.rotation.y = 0.1;
+    teacherDesk.add(tdBook);
+    // pen holder
+    const tdPenHolder = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.038, 0.035, 0.11, 16),
+      new THREE.MeshLambertMaterial({ color: 0x6a3a1a })
+    );
+    tdPenHolder.position.set(-0.82, 0.955, -0.25);
+    teacherDesk.add(tdPenHolder);
+    ['#c0392b', '#2c3e50', '#27ae60'].forEach((col, i) => {
+      const pen = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.006, 0.006, 0.18, 8),
+        new THREE.MeshLambertMaterial({ color: col })
+      );
+      pen.position.set(-0.82 + (i - 1) * 0.012, 1.04, -0.25);
+      pen.rotation.z = (i - 1) * 0.1;
+      teacherDesk.add(pen);
+    });
 
-    // (teacher's desk removed per request — it was blocking the boards)
+    // ---- trash can in front-left corner ----
+    const trashGroup = new THREE.Group();
+    trashGroup.position.set(-roomW/2 + 0.35, 0, -roomD/2 + 0.45);
+    scene.add(trashGroup);
+
+    const trashProfile = [
+      new THREE.Vector2(0.0,  0.0),
+      new THREE.Vector2(0.14, 0.0),
+      new THREE.Vector2(0.16, 0.02),
+      new THREE.Vector2(0.17, 0.18),
+      new THREE.Vector2(0.19, 0.36),
+      new THREE.Vector2(0.2,  0.40),
+      new THREE.Vector2(0.19, 0.41),
+    ];
+    const trashCan = new THREE.Mesh(
+      new THREE.LatheGeometry(trashProfile, 20),
+      new THREE.MeshLambertMaterial({ color: 0x4a5568, side: THREE.DoubleSide })
+    );
+    trashGroup.add(trashCan);
+    // rim ring
+    const trashRim = new THREE.Mesh(
+      new THREE.TorusGeometry(0.195, 0.008, 6, 24),
+      new THREE.MeshLambertMaterial({ color: 0x2d3748 })
+    );
+    trashRim.rotation.x = Math.PI / 2;
+    trashRim.position.y = 0.41;
+    trashGroup.add(trashRim);
+    // crumpled paper ball inside
+    const crumple = new THREE.Mesh(
+      new THREE.SphereGeometry(0.07, 6, 5),
+      new THREE.MeshLambertMaterial({ color: 0xf0ebe0 })
+    );
+    crumple.position.set(0.02, 0.28, 0.03);
+    trashGroup.add(crumple);
 
     // ---- my desk group (so we can scale uniformly) ----
     const myDesk = new THREE.Group();
@@ -939,39 +1178,65 @@ window.Classroom = (function () {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
     });
+    // Diary — proper layered book: two covers + page block, no elastic band
     const diaryColor = 0x6a2f22;
+    const diaryGroup = new THREE.Group();
+    diaryGroup.position.set(-0.38, 0.900, -0.05);
+    diaryGroup.rotation.y = 0.2;
+    myDesk.add(diaryGroup);
+    // top cover (full size, with the canvas design)
     const notebook = new THREE.Mesh(
-      new THREE.BoxGeometry(0.36, 0.055, 0.5),
+      new THREE.BoxGeometry(0.30, 0.010, 0.42),
       [
-        new THREE.MeshLambertMaterial({ color: diaryColor }),       // +x (right edge)
-        new THREE.MeshLambertMaterial({ color: 0x4a1f14 }),          // -x (spine side)
-        new THREE.MeshLambertMaterial({ map: diaryTex }),            // +y (top — the cover design)
-        new THREE.MeshLambertMaterial({ color: 0xe8d8b0 }),          // -y (bottom — page edges visible from below)
-        new THREE.MeshLambertMaterial({ color: 0xe8d8b0 }),          // +z (front page-edges)
-        new THREE.MeshLambertMaterial({ color: 0xe8d8b0 }),          // -z (back page-edges)
+        new THREE.MeshLambertMaterial({ color: diaryColor }),
+        new THREE.MeshLambertMaterial({ color: 0x4a1f14 }),
+        new THREE.MeshLambertMaterial({ map: diaryTex }),  // +y = visible top face
+        new THREE.MeshLambertMaterial({ color: diaryColor }),
+        new THREE.MeshLambertMaterial({ color: diaryColor }),
+        new THREE.MeshLambertMaterial({ color: diaryColor }),
       ]
     );
-    notebook.position.set(-0.38, 0.905, -0.05);
-    notebook.rotation.y = 0.2;
+    notebook.position.set(0, 0.030, 0);
     notebook.castShadow = true;
     notebook.receiveShadow = true;
     notebook.userData.hit = 'notebook';
     notebook.userData.label = 'Open the diary';
-    myDesk.add(notebook);
+    diaryGroup.add(notebook);
     interactive.push(notebook);
-    // elastic band across the diary
-    const diaryBand = new THREE.Mesh(
-      new THREE.BoxGeometry(0.02, 0.057, 0.52),
-      new THREE.MeshLambertMaterial({ color: 0x2a1a14 })
+    // page block (slightly narrower = "shorter in the middle" = looks like a real book)
+    const diaryPages = new THREE.Mesh(
+      new THREE.BoxGeometry(0.28, 0.040, 0.40),
+      [
+        new THREE.MeshLambertMaterial({ color: 0xe8dfc0 }),
+        new THREE.MeshLambertMaterial({ color: 0x4a1f14 }),  // spine
+        new THREE.MeshLambertMaterial({ color: 0xe8dfc0 }),
+        new THREE.MeshLambertMaterial({ color: 0xe8dfc0 }),
+        new THREE.MeshLambertMaterial({ color: 0xf0e8cc }),
+        new THREE.MeshLambertMaterial({ color: 0xf0e8cc }),
+      ]
     );
-    diaryBand.position.set(-0.38 + Math.cos(0.2) * 0.12, 0.905, -0.05 + Math.sin(0.2) * 0.12);
-    diaryBand.rotation.y = 0.2;
-    myDesk.add(diaryBand);
+    diaryPages.position.set(0, 0.005, 0);
+    diaryGroup.add(diaryPages);
+    // bottom cover (full size)
+    const diaryBottom = new THREE.Mesh(
+      new THREE.BoxGeometry(0.30, 0.010, 0.42),
+      new THREE.MeshLambertMaterial({ color: 0x5a2618 })
+    );
+    diaryBottom.position.set(0, -0.020, 0);
+    diaryGroup.add(diaryBottom);
+    // spine strip
+    const diarySpine = new THREE.Mesh(
+      new THREE.BoxGeometry(0.010, 0.062, 0.42),
+      new THREE.MeshLambertMaterial({ color: 0x3a1810 })
+    );
+    diarySpine.position.set(-0.155, 0.005, 0);
+    diaryGroup.add(diarySpine);
 
     // ---- Textbook (hardcover, stacked pages, bookmark ribbon) ----
     const textbookGroup = new THREE.Group();
     textbookGroup.position.set(0.42, 0.885, 0.15);
     textbookGroup.rotation.y = -0.18;
+    textbookGroup.scale.setScalar(0.78);
     myDesk.add(textbookGroup);
 
     const textbookTex = textbookTexture(opts.accentHex);
@@ -1275,6 +1540,7 @@ window.Classroom = (function () {
     const bookshelfGroup = new THREE.Group();
     bookshelfGroup.position.set(roomW/2 - 0.25, 0, -2.4);
     bookshelfGroup.rotation.y = -Math.PI / 2;
+    bookshelfGroup.scale.set(1.3, 1.6, 1.3);
     scene.add(bookshelfGroup);
     const shelfMat = new THREE.MeshLambertMaterial({ map: woodTexture(0) });
     // side panels
@@ -1325,21 +1591,21 @@ window.Classroom = (function () {
 
     // ---- Globe on top of the bookshelf ----
     const globeGroup = new THREE.Group();
-    globeGroup.position.set(roomW/2 - 0.25, 2.02, -2.1);
+    globeGroup.position.set(roomW/2 - 0.25, 3.17, -2.1);
     scene.add(globeGroup);
     // base
     const globeBase = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.09, 0.11, 0.04, 20),
+      new THREE.CylinderGeometry(0.13, 0.15, 0.05, 20),
       new THREE.MeshLambertMaterial({ color: 0x3a2818 })
     );
-    globeBase.position.set(0, 0.02, 0);
+    globeBase.position.set(0, 0.025, 0);
     globeGroup.add(globeBase);
     // arc
     const globeArc = new THREE.Mesh(
-      new THREE.TorusGeometry(0.14, 0.008, 8, 24, Math.PI),
+      new THREE.TorusGeometry(0.20, 0.010, 8, 24, Math.PI),
       new THREE.MeshLambertMaterial({ color: 0xd4a04a })
     );
-    globeArc.position.set(0, 0.18, 0);
+    globeArc.position.set(0, 0.24, 0);
     globeArc.rotation.y = Math.PI / 2;
     globeGroup.add(globeArc);
     // sphere
@@ -1372,10 +1638,10 @@ window.Classroom = (function () {
       }
     });
     const globe = new THREE.Mesh(
-      new THREE.SphereGeometry(0.13, 24, 18),
+      new THREE.SphereGeometry(0.19, 24, 18),
       new THREE.MeshLambertMaterial({ map: globeTex })
     );
-    globe.position.set(0, 0.17, 0);
+    globe.position.set(0, 0.24, 0);
     globe.rotation.z = 0.24; // earth's tilt
     globeGroup.add(globe);
     globe.userData.hit = 'globe';
@@ -1447,39 +1713,9 @@ window.Classroom = (function () {
     scene.add(makePlant(roomW/2 - 0.45, roomD/2 - 0.8, 0.9));
     // Tiny succulent on the bookshelf top (next to the globe)
     const shelfPlant = makePlant(0, 0, 0.35);
-    shelfPlant.position.set(roomW/2 - 0.25, 2.02, -1.6);
+    shelfPlant.position.set(roomW/2 - 0.25, 3.17, -2.75);
     scene.add(shelfPlant);
     // Small hanging-ish plant on top of the left nameboard frame — removed (was floating mid-air)
-    // A small pot on my desk — right-back corner
-    const deskPlantGroup = new THREE.Group();
-    deskPlantGroup.position.set(0.5, 0.885, 0.2);
-    deskPlantGroup.scale.setScalar(0.18);
-    const deskPotProfile = [
-      new THREE.Vector2(0.0, 0.0),
-      new THREE.Vector2(0.18, 0.0),
-      new THREE.Vector2(0.2, 0.05),
-      new THREE.Vector2(0.2, 0.3),
-      new THREE.Vector2(0.18, 0.32),
-    ];
-    const deskPot = new THREE.Mesh(
-      new THREE.LatheGeometry(deskPotProfile, 16),
-      new THREE.MeshLambertMaterial({ color: 0xc4a48a, side: THREE.DoubleSide })
-    );
-    deskPlantGroup.add(deskPot);
-    // succulent-ish fronds on desk plant
-    const deskLeafMat = new THREE.MeshLambertMaterial({ color: 0x6ea050 });
-    for (let i = 0; i < 7; i++) {
-      const ang = (i / 7) * Math.PI * 2;
-      const blade = new THREE.Mesh(
-        new THREE.ConeGeometry(0.055, 0.38 + Math.random()*0.12, 5),
-        deskLeafMat
-      );
-      blade.position.set(Math.cos(ang)*0.04, 0.52, Math.sin(ang)*0.04);
-      blade.rotation.z = Math.cos(ang) * 0.5;
-      blade.rotation.x = Math.sin(ang) * 0.5;
-      deskPlantGroup.add(blade);
-    }
-    myDesk.add(deskPlantGroup);
 
     // ---- Backpack on the floor, slumped against my desk's chair ----
     const backpackGroup = new THREE.Group();
@@ -1514,86 +1750,72 @@ window.Classroom = (function () {
       backpackGroup.add(strap);
     });
 
-    // ---- A pair of school pennants in the front-right corner, above the side-board ----
-    // (old pole was clipping the alphabet banner; moved to the side wall / corner)
-    function makePennant(origin, rotY, color, text) {
-      const g = new THREE.Group();
-      g.position.copy(origin);
-      g.rotation.y = rotY;
-      // short mounting bracket on the wall
-      const bracket = new THREE.Mesh(
-        new THREE.BoxGeometry(0.03, 0.03, 0.06),
-        new THREE.MeshLambertMaterial({ color: 0x3a2818 })
-      );
-      bracket.position.set(0, 0, 0.03);
-      g.add(bracket);
-      // pole extending out from the wall
-      const pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.012, 0.012, 0.7, 10),
-        new THREE.MeshLambertMaterial({ color: 0x8d6b3d })
-      );
-      pole.rotation.x = Math.PI / 2;
-      pole.position.set(0, 0, 0.38);
-      g.add(pole);
-      // triangular felt pennant hanging off the pole
-      const pennantTex = makeCanvasTexture(512, 256, (ctx, w, h) => {
-        const grad = ctx.createLinearGradient(0, 0, w, 0);
-        grad.addColorStop(0, color); grad.addColorStop(1, shade(color, -0.15));
-        ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
-        // felt noise
-        ctx.fillStyle = 'rgba(0,0,0,0.06)';
-        for (let i = 0; i < 800; i++) ctx.fillRect(Math.random()*w, Math.random()*h, 2, 1);
-        // text
-        ctx.fillStyle = '#fff8ea';
-        ctx.font = 'bold 120px "Patrick Hand", cursive';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(text, 60, h / 2 - 10);
-        // stitched edge
-        ctx.strokeStyle = 'rgba(255,248,234,0.5)';
-        ctx.setLineDash([10, 8]);
-        ctx.lineWidth = 3;
-        ctx.strokeRect(12, 12, w - 24, h - 24);
-        ctx.setLineDash([]);
-      });
-      const flagShape = new THREE.Shape();
-      flagShape.moveTo(0, 0);
-      flagShape.lineTo(0, 0.26);
-      flagShape.lineTo(0.7, 0.13);
-      flagShape.closePath();
-      const pennantGeo = new THREE.ShapeGeometry(flagShape);
-      // remap UVs so the canvas fills the triangle
-      const uv = pennantGeo.attributes.uv;
-      for (let i = 0; i < uv.count; i++) {
-        const x = pennantGeo.attributes.position.getX(i);
-        const y = pennantGeo.attributes.position.getY(i);
-        uv.setXY(i, x / 0.7, y / 0.26);
-      }
-      uv.needsUpdate = true;
-      const pennant = new THREE.Mesh(
-        pennantGeo,
-        new THREE.MeshLambertMaterial({ map: pennantTex, side: THREE.DoubleSide })
-      );
-      // pennant hangs from the pole, drooping slightly
-      pennant.position.set(0, -0.13, 0.03);
-      pennant.rotation.z = -0.08;
-      g.add(pennant);
-      return g;
-    }
     // helper to shade a hex color
     function shade(hex, amt) {
       const c = new THREE.Color(hex);
       c.offsetHSL(0, 0, amt);
       return `#${c.getHexString()}`;
     }
-    // Two UW–Madison style pennants, hung high on the front-left wall
-    scene.add(makePennant(
-      new THREE.Vector3(-roomW/2 + 0.05, 3.0, -2.2),
-      Math.PI / 2, '#c41e3a', 'WISCONSIN'
-    ));
-    scene.add(makePennant(
-      new THREE.Vector3(-roomW/2 + 0.05, 2.55, -2.2),
-      Math.PI / 2, '#ffffff', 'BADGERS'
-    ));
+
+    // ---- School pennants on the front wall, left corner — pointing downward, clearly visible ----
+    function makePennant(x, y, z, color, text, textColor) {
+      const g = new THREE.Group();
+      g.position.set(x, y, z);
+      // Canvas: full rectangle, text in upper half, tip implied by geometry
+      const pennantTex = makeCanvasTexture(560, 320, (ctx, w, h) => {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, color);
+        grad.addColorStop(1, shade(color, -0.18));
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+        // felt noise
+        ctx.fillStyle = 'rgba(0,0,0,0.05)';
+        for (let i = 0; i < 900; i++) ctx.fillRect(Math.random()*w, Math.random()*h, 2, 1);
+        // text — centered, readable
+        ctx.fillStyle = textColor || '#fff8ea';
+        ctx.font = 'bold 112px "Patrick Hand", cursive';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, w / 2, h * 0.38);
+        // stitched border
+        ctx.strokeStyle = (textColor === '#1a1510' ? 'rgba(0,0,0,0.25)' : 'rgba(255,248,234,0.45)');
+        ctx.setLineDash([10, 7]);
+        ctx.lineWidth = 3;
+        ctx.strokeRect(14, 14, w - 28, h - 28);
+        ctx.setLineDash([]);
+      });
+      // Downward-pointing triangle in X-Y plane, faces +Z toward viewer
+      const flagShape = new THREE.Shape();
+      flagShape.moveTo(-0.26, 0.0);   // top-left
+      flagShape.lineTo( 0.26, 0.0);   // top-right
+      flagShape.lineTo( 0.0, -0.62);  // tip pointing down
+      flagShape.closePath();
+      const pennantGeo = new THREE.ShapeGeometry(flagShape);
+      // UV: u = (x+0.26)/0.52, v = -y/0.62  (0 at top, 1 at tip)
+      const uv = pennantGeo.attributes.uv;
+      for (let i = 0; i < uv.count; i++) {
+        const px = pennantGeo.attributes.position.getX(i);
+        const py = pennantGeo.attributes.position.getY(i);
+        uv.setXY(i, (px + 0.26) / 0.52, -py / 0.62);
+      }
+      uv.needsUpdate = true;
+      const pennant = new THREE.Mesh(
+        pennantGeo,
+        new THREE.MeshLambertMaterial({ map: pennantTex, side: THREE.DoubleSide })
+      );
+      g.add(pennant);
+      // mounting strip at the top edge
+      const strip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.54, 0.032, 0.025),
+        new THREE.MeshLambertMaterial({ color: 0x3a2818 })
+      );
+      strip.position.set(0, 0.016, -0.01);
+      g.add(strip);
+      return g;
+    }
+    // Two pennants on front wall, far left (between left board and wall edge)
+    scene.add(makePennant(-4.05, 3.15, -roomD/2 + 0.04, '#c41e3a', 'WISC'));
+    scene.add(makePennant(-3.45, 3.15, -roomD/2 + 0.04, '#1e3a6e', 'UW'));
 
     // ---- Poster on the right wall ----
     function makePoster(x, y, z, rotY, title, bgColor) {
@@ -1754,10 +1976,10 @@ window.Classroom = (function () {
     mullionH.position.set(-roomW/2 + 0.1, 1.9, 1.2);
     scene.add(mullionH);
 
-    // ---- clock on back wall (behind you when you turn around) ----
+    // ---- clock on front wall, visible when looking at the boards ----
     const clockGroup = new THREE.Group();
-    clockGroup.position.set(0, 2.6, roomD/2 - 0.05);
-    clockGroup.rotation.y = Math.PI;
+    clockGroup.position.set(3.8, 3.1, -roomD/2 + 0.05);
+    clockGroup.rotation.y = 0;
 
     const clockFace = new THREE.Mesh(
       new THREE.CircleGeometry(0.3, 32),
@@ -1930,8 +2152,8 @@ window.Classroom = (function () {
       const geo = obj.geometry.clone();
       const mat = new THREE.MeshBasicMaterial({
         color: opts.accentHex,
-        transparent: true, opacity: 0.45,
-        side: THREE.BackSide,
+        transparent: true, opacity: 0.35,
+        side: THREE.DoubleSide,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
@@ -1959,7 +2181,7 @@ window.Classroom = (function () {
       dust: (opts.dust !== 'off'),
       clockHands: { hour: hourPivot, min: minPivot, sec: secPivot },
       windowTex, windowMat: windowGlass.material,
-      wbTex, leftBoardTex, rightBoardTex, bulletinMat: bulletin.material,
+      wbTex, leftBoardTex, bulletinMat: bulletin.material,
       laptopScreenMat: laptopScreen.material,
       paperMat: null,
       textbookMats: tbCover.material,
@@ -2123,8 +2345,7 @@ window.Classroom = (function () {
       if (wb) wb.material.map = whiteboardTexture(accentHex);
       const lb = state.interactive.find(o => o.userData.hit === 'leftboard');
       if (lb) lb.material.map = nameBoardTexture(accentHex);
-      const rb = state.interactive.find(o => o.userData.hit === 'rightboard');
-      if (rb) rb.material.map = contactBoardTexture(accentHex);
+      // right contact display is baked cards — no accent-driven texture to update
       const bl = state.interactive.find(o => o.userData.hit === 'bulletin');
       if (bl) bl.material.map = bulletinTexture(accentHex);
       const lp = state.interactive.find(o => o.userData.hit === 'laptop');
