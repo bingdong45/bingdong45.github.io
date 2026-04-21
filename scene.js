@@ -608,6 +608,8 @@ window.Classroom = (function () {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#2a2d1d');
@@ -619,12 +621,23 @@ window.Classroom = (function () {
     camera.rotation.order = 'YXZ';
 
     // ---- lighting ----
-    const ambient = new THREE.AmbientLight(0xfff6e0, 0.65);
+    const ambient = new THREE.AmbientLight(0xfff6e0, 0.45);
     scene.add(ambient);
 
     // warm key from window (left) — slightly cooler than before for a schoolroom feel
     const key = new THREE.DirectionalLight(0xffd8a0, 1.2);
     key.position.set(-4, 3.5, 1.5);
+    key.castShadow = true;
+    key.shadow.mapSize.width = 1024;
+    key.shadow.mapSize.height = 1024;
+    key.shadow.camera.near = 0.5;
+    key.shadow.camera.far = 22;
+    key.shadow.camera.left = -8;
+    key.shadow.camera.right = 8;
+    key.shadow.camera.top = 6;
+    key.shadow.camera.bottom = -5;
+    key.shadow.bias = -0.0001;
+    key.shadow.normalBias = 0.02;
     scene.add(key);
 
     // cool fill from right
@@ -659,6 +672,7 @@ window.Classroom = (function () {
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(roomW, roomD), floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = 0;
+    floor.receiveShadow = true;
     scene.add(floor);
 
     const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(roomW, roomD), ceilMat);
@@ -705,6 +719,8 @@ window.Classroom = (function () {
       new THREE.MeshLambertMaterial({ map: woodTexture(0) })
     );
     whiteboardFrame.position.set(0, 1.85, -roomD / 2 + 0.06);
+    whiteboardFrame.castShadow = true;
+    whiteboardFrame.receiveShadow = true;
     scene.add(whiteboardFrame);
 
     const wbTex = whiteboardTexture(opts.accentHex);
@@ -774,6 +790,8 @@ window.Classroom = (function () {
       new THREE.MeshLambertMaterial({ map: woodTexture(0) })
     );
     leftBoardFrame.position.set(-3.4, 1.75, -roomD/2 + 0.06);
+    leftBoardFrame.castShadow = true;
+    leftBoardFrame.receiveShadow = true;
     scene.add(leftBoardFrame);
 
     const leftBoardTex = nameBoardTexture(opts.accentHex);
@@ -794,6 +812,8 @@ window.Classroom = (function () {
       new THREE.MeshLambertMaterial({ map: woodTexture(0) })
     );
     rightBoardFrame.position.set(3.4, 1.75, -roomD/2 + 0.06);
+    rightBoardFrame.castShadow = true;
+    rightBoardFrame.receiveShadow = true;
     scene.add(rightBoardFrame);
 
     const rightBoardTex = contactBoardTexture(opts.accentHex);
@@ -820,9 +840,11 @@ window.Classroom = (function () {
     // ---- student desk (YOUR desk — just in front of camera, look down) ----
     const desk = new THREE.Mesh(
       new THREE.BoxGeometry(1.4, 0.06, 0.7),
-      new THREE.MeshLambertMaterial({ map: woodTexture(1) })
+      new THREE.MeshStandardMaterial({ map: woodTexture(1), roughness: 0.65, metalness: 0.0 })
     );
     desk.position.set(0, 0.85, 0.0);
+    desk.castShadow = true;
+    desk.receiveShadow = true;
     myDesk.add(desk);
 
     // lip
@@ -931,6 +953,8 @@ window.Classroom = (function () {
     );
     notebook.position.set(-0.38, 0.905, -0.05);
     notebook.rotation.y = 0.2;
+    notebook.castShadow = true;
+    notebook.receiveShadow = true;
     notebook.userData.hit = 'notebook';
     notebook.userData.label = 'Open the diary';
     myDesk.add(notebook);
@@ -1028,18 +1052,22 @@ window.Classroom = (function () {
 
     const laptopBodyColor = 0x8a8a90;
     const laptopBodyDark = 0x4a4a52;
+    const laptopBodyMat = new THREE.MeshStandardMaterial({ color: laptopBodyColor, roughness: 0.12, metalness: 0.88 });
+    const laptopBodyDarkMat = new THREE.MeshStandardMaterial({ color: laptopBodyDark, roughness: 0.15, metalness: 0.85 });
 
     // base (deck)
     const laptopBase = new THREE.Mesh(
       new THREE.BoxGeometry(0.44, 0.018, 0.3),
-      new THREE.MeshLambertMaterial({ color: laptopBodyColor })
+      laptopBodyMat
     );
     laptopBase.position.set(0, 0.009, 0);
+    laptopBase.castShadow = true;
+    laptopBase.receiveShadow = true;
     laptopGroup.add(laptopBase);
     // slight bottom chassis (so it looks like a unibody not a flat slab)
     const laptopBelly = new THREE.Mesh(
       new THREE.BoxGeometry(0.42, 0.008, 0.28),
-      new THREE.MeshLambertMaterial({ color: laptopBodyDark })
+      laptopBodyDarkMat
     );
     laptopBelly.position.set(0, -0.001, 0);
     laptopGroup.add(laptopBelly);
@@ -1096,7 +1124,7 @@ window.Classroom = (function () {
     // hinge (small cylinder across the back)
     const hinge = new THREE.Mesh(
       new THREE.CylinderGeometry(0.006, 0.006, 0.36, 8),
-      new THREE.MeshLambertMaterial({ color: laptopBodyDark })
+      laptopBodyDarkMat
     );
     hinge.rotation.z = Math.PI / 2;
     hinge.position.set(0, 0.02, -0.148);
@@ -1111,7 +1139,7 @@ window.Classroom = (function () {
     // lid back (what you'd see if looking from behind; also the outer shell)
     const laptopLid = new THREE.Mesh(
       new THREE.BoxGeometry(0.44, lidHeight, 0.012),
-      new THREE.MeshLambertMaterial({ color: laptopBodyColor })
+      laptopBodyMat
     );
     laptopLid.position.set(0, lidHeight / 2, -0.006);
     laptopScreenGroup.add(laptopLid);
@@ -1192,7 +1220,7 @@ window.Classroom = (function () {
     ];
     const mugBody = new THREE.Mesh(
       new THREE.LatheGeometry(mugProfile, 32),
-      new THREE.MeshLambertMaterial({ color: 0xe8dcc2, side: THREE.DoubleSide })
+      new THREE.MeshStandardMaterial({ color: 0xe8dcc2, roughness: 0.55, metalness: 0.0, side: THREE.DoubleSide })
     );
     mugBody.position.set(0.58, 0.885, -0.24);
     mugBody.userData.hit = 'mug';
@@ -1232,9 +1260,11 @@ window.Classroom = (function () {
     // ---- chair (you can see back of it) ----
     const chairSeat = new THREE.Mesh(
       new THREE.BoxGeometry(0.5, 0.05, 0.5),
-      new THREE.MeshLambertMaterial({ color: 0x8b6640 })
+      new THREE.MeshStandardMaterial({ color: 0x8b6640, roughness: 0.8, metalness: 0.0 })
     );
     chairSeat.position.set(0, 0.52, 0.5);
+    chairSeat.castShadow = true;
+    chairSeat.receiveShadow = true;
     scene.add(chairSeat);
 
     // ======================================================================
@@ -1830,10 +1860,14 @@ window.Classroom = (function () {
     for (let i = -1; i <= 1; i++) {
       const lightFix = new THREE.Mesh(
         new THREE.BoxGeometry(1.2, 0.06, 0.3),
-        new THREE.MeshBasicMaterial({ color: 0xfff2cc })
+        new THREE.MeshBasicMaterial({ color: 0xfff8e8 })
       );
       lightFix.position.set(i * 2.5, roomH - 0.05, -1 + i * 0.5);
       scene.add(lightFix);
+
+      const pl = new THREE.PointLight(0xfff8e8, 0.55, 7, 2);
+      pl.position.set(i * 2.5, roomH - 0.12, -1 + i * 0.5);
+      scene.add(pl);
     }
 
     // ---- extra desks to either side to make it feel like a classroom ----
@@ -2067,10 +2101,10 @@ window.Classroom = (function () {
 
       // also adjust lighting
       const presets = {
-        morning:   { amb: 0xfff4dc, amb_i: 0.6,  key: 0xffc890, key_i: 1.05, ray: 0.08, bg: '#2b2d1f' },
-        afternoon: { amb: 0xfff6e0, amb_i: 0.65, key: 0xffd8a0, key_i: 1.2,  ray: 0.10, bg: '#2a2d1d' },
-        dusk:      { amb: 0xe8b098, amb_i: 0.4,  key: 0xff8a60, key_i: 0.9,  ray: 0.12, bg: '#231a22' },
-        night:     { amb: 0x6478a8, amb_i: 0.2,  key: 0x8896b8, key_i: 0.35, ray: 0.02, bg: '#0e121e' },
+        morning:   { amb: 0xfff4dc, amb_i: 0.42, key: 0xffc890, key_i: 1.05, ray: 0.08, bg: '#2b2d1f' },
+        afternoon: { amb: 0xfff6e0, amb_i: 0.45, key: 0xffd8a0, key_i: 1.2,  ray: 0.10, bg: '#2a2d1d' },
+        dusk:      { amb: 0xe8b098, amb_i: 0.28, key: 0xff8a60, key_i: 0.9,  ray: 0.12, bg: '#231a22' },
+        night:     { amb: 0x6478a8, amb_i: 0.15, key: 0x8896b8, key_i: 0.35, ray: 0.02, bg: '#0e121e' },
       };
       const p = presets[mode] || presets.afternoon;
       state.ambient.color.set(p.amb); state.ambient.intensity = p.amb_i;
