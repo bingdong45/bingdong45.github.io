@@ -748,7 +748,37 @@ window.Classroom = (function () {
     const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture() });
     floorMat.map.wrapS = floorMat.map.wrapT = THREE.RepeatWrapping;
     floorMat.map.repeat.set(3, 3);
-    const ceilMat = new THREE.MeshLambertMaterial({ color: 0xf7f3df });
+    const ceilTileTex = makeCanvasTexture(512, 512, (ctx, w, h) => {
+      ctx.fillStyle = '#f2eedf';
+      ctx.fillRect(0, 0, w, h);
+      const cols = 4, rows = 4, tw = w / cols, th = h / rows;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const tx = c * tw, ty = r * th;
+          // subtle stipple within each tile
+          for (let i = 0; i < 60; i++) {
+            const v = Math.random();
+            if (v > 0.85) {
+              ctx.fillStyle = `rgba(160,148,120,${0.04 + Math.random()*0.06})`;
+              ctx.fillRect(tx + Math.random()*tw, ty + Math.random()*th, 3, 3);
+            }
+          }
+        }
+      }
+      // T-bar grid
+      ctx.strokeStyle = 'rgba(140,128,105,0.55)';
+      ctx.lineWidth = 4;
+      for (let i = 0; i <= cols; i++) { ctx.beginPath(); ctx.moveTo(i*tw, 0); ctx.lineTo(i*tw, h); ctx.stroke(); }
+      for (let i = 0; i <= rows; i++) { ctx.beginPath(); ctx.moveTo(0, i*th); ctx.lineTo(w, i*th); ctx.stroke(); }
+      // thin highlight inside each bar
+      ctx.strokeStyle = 'rgba(255,252,240,0.4)';
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i <= cols; i++) { ctx.beginPath(); ctx.moveTo(i*tw+2, 0); ctx.lineTo(i*tw+2, h); ctx.stroke(); }
+      for (let i = 0; i <= rows; i++) { ctx.beginPath(); ctx.moveTo(0, i*th+2); ctx.lineTo(w, i*th+2); ctx.stroke(); }
+    });
+    ceilTileTex.wrapS = ceilTileTex.wrapT = THREE.RepeatWrapping;
+    ceilTileTex.repeat.set(3, 2.5);
+    const ceilMat = new THREE.MeshLambertMaterial({ map: ceilTileTex });
 
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(roomW, roomD), floorMat);
     floor.rotation.x = -Math.PI / 2;
@@ -760,6 +790,35 @@ window.Classroom = (function () {
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.y = roomH;
     scene.add(ceiling);
+
+    // floor mat in front of whiteboard
+    const matTex = makeCanvasTexture(512, 256, (ctx, w, h) => {
+      ctx.fillStyle = '#7a3e28';
+      ctx.fillRect(0, 0, w, h);
+      // woven pattern
+      for (let y = 0; y < h; y += 8) {
+        for (let x = 0; x < w; x += 8) {
+          if ((Math.floor(x/8) + Math.floor(y/8)) % 2 === 0) {
+            ctx.fillStyle = 'rgba(0,0,0,0.12)';
+            ctx.fillRect(x, y, 8, 8);
+          }
+        }
+      }
+      // border stripe
+      ctx.strokeStyle = '#c8784a';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(10, 10, w-20, h-20);
+      ctx.strokeStyle = '#4a1e0e';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(18, 18, w-36, h-36);
+    });
+    const floorMat3d = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.4, 1.2),
+      new THREE.MeshLambertMaterial({ map: matTex })
+    );
+    floorMat3d.rotation.x = -Math.PI / 2;
+    floorMat3d.position.set(0, 0.002, -roomD/2 + 1.0);
+    scene.add(floorMat3d);
 
     const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(roomW, roomH), wallMat);
     frontWall.position.set(0, roomH / 2, -roomD / 2);
@@ -864,6 +923,19 @@ window.Classroom = (function () {
       m.position.set(-0.4 + i*0.4, 0.39, -roomD/2 + 0.2);
       scene.add(m);
     });
+    // felt board eraser on tray
+    const eraserWood = new THREE.Mesh(
+      new THREE.BoxGeometry(0.22, 0.04, 0.07),
+      new THREE.MeshLambertMaterial({ color: 0x7a5830 })
+    );
+    eraserWood.position.set(1.6, 0.375, -roomD/2 + 0.19);
+    scene.add(eraserWood);
+    const eraserFelt = new THREE.Mesh(
+      new THREE.BoxGeometry(0.22, 0.016, 0.07),
+      new THREE.MeshLambertMaterial({ color: 0xd8d0c8 })
+    );
+    eraserFelt.position.set(1.6, 0.395, -roomD/2 + 0.19);
+    scene.add(eraserFelt);
 
     // ---- left small board (name) ----
     const leftBoardFrame = new THREE.Mesh(
@@ -1876,6 +1948,73 @@ window.Classroom = (function () {
     makePoster(roomW/2 - 0.02, 2.1, 0.2, -Math.PI/2, 'Be Curious Ask Often', 0x2f5d8f);
     makePoster(roomW/2 - 0.02, 2.1, 1.6, -Math.PI/2, 'Show Your Work', 0xc2583a);
 
+    // ---- Calendar on right wall ----
+    const calTex = makeCanvasTexture(512, 640, (ctx, w, h) => {
+      ctx.fillStyle = '#fffdf5';
+      ctx.fillRect(0, 0, w, h);
+      // header
+      ctx.fillStyle = '#c0392b';
+      ctx.fillRect(0, 0, w, 106);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 58px "Patrick Hand", cursive';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('April 2026', w/2, 53);
+      // day headers
+      const days = ['S','M','T','W','T','F','S'];
+      ctx.fillStyle = 'rgba(26,21,16,0.5)';
+      ctx.font = '30px "JetBrains Mono", monospace';
+      ctx.textBaseline = 'top';
+      days.forEach((d, i) => ctx.fillText(d, 28 + i * 66, 116));
+      // numbers
+      const startDow = 3; // April 1 2026 = Wednesday
+      let day = 1;
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 7; col++) {
+          const pos = row * 7 + col;
+          if (pos < startDow || day > 30) continue;
+          const cx = 28 + col * 66, cy = 160 + row * 90;
+          if (day === 21) {
+            ctx.fillStyle = '#c0392b';
+            ctx.beginPath(); ctx.arc(cx + 14, cy + 18, 24, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#fff';
+          } else { ctx.fillStyle = col === 0 || col === 6 ? 'rgba(192,57,43,0.55)' : '#1a1510'; }
+          ctx.font = (day === 21 ? 'bold ' : '') + '34px "Patrick Hand", cursive';
+          ctx.textAlign = 'left';
+          ctx.fillText(day, cx, cy);
+          // x through past days
+          if (day < 21 && col !== 0 && col !== 6) {
+            ctx.strokeStyle = 'rgba(192,57,43,0.35)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx+2, cy+2); ctx.lineTo(cx+26, cy+26);
+            ctx.moveTo(cx+26, cy+2); ctx.lineTo(cx+2, cy+26);
+            ctx.stroke();
+          }
+          day++;
+        }
+      }
+      ctx.textAlign = 'left';
+      // outer border
+      ctx.strokeStyle = 'rgba(26,21,16,0.15)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(2, 2, w-4, h-4);
+    });
+    const calMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.52, 0.65),
+      new THREE.MeshLambertMaterial({ map: calTex })
+    );
+    calMesh.position.set(roomW/2 - 0.02, 2.35, -0.5);
+    calMesh.rotation.y = -Math.PI/2;
+    scene.add(calMesh);
+    // thin clip/frame at top
+    const calClip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.03, 0.08, 0.54),
+      new THREE.MeshLambertMaterial({ color: 0x888888 })
+    );
+    calClip.position.set(roomW/2 - 0.04, 2.695, -0.5);
+    scene.add(calClip);
+
     // ---- Alphabet banner above the whiteboard (sized to fit the whiteboard, safely below ceiling) ----
     const bannerTex = makeCanvasTexture(2048, 180, (ctx, w, h) => {
       // string — a thin line across the top so the cards look like they hang
@@ -1983,7 +2122,74 @@ window.Classroom = (function () {
     mullionH.position.set(-roomW/2 + 0.1, 1.9, -2.0);
     scene.add(mullionH);
 
-    // ---- clock on front wall, visible when looking at the boards ----
+    // ---- venetian blinds on window (partially open) ----
+    const slatMat = new THREE.MeshLambertMaterial({ color: 0xe8e2d0, side: THREE.DoubleSide });
+    for (let i = 0; i < 14; i++) {
+      const slat = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.065, 2.0), slatMat);
+      slat.position.set(-roomW/2 + 0.22, 1.1 + i * 0.11, -2.0);
+      slat.rotation.z = 0.38;
+      scene.add(slat);
+    }
+    // pull cord
+    const cordMat = new THREE.MeshLambertMaterial({ color: 0xd0c4a8 });
+    [-0.82, 0.82].forEach(oz => {
+      const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 1.54, 5), cordMat);
+      cord.position.set(-roomW/2 + 0.22, 1.54, -2.0 + oz);
+      scene.add(cord);
+    });
+
+    // ---- door on back wall (right side) ----
+    const doorGroup = new THREE.Group();
+    const doorTex = makeCanvasTexture(256, 512, (ctx, w, h) => {
+      ctx.fillStyle = '#cec3a8';
+      ctx.fillRect(0, 0, w, h);
+      // four recessed panels
+      [[16, 16, w-32, h*0.28], [16, h*0.31, w-32, h*0.2],
+       [16, h*0.54, w-32, h*0.28], [16, h*0.85, w-32, h*0.1]].forEach(([px,py,pw,ph]) => {
+        ctx.fillStyle = 'rgba(0,0,0,0.07)';
+        ctx.fillRect(px+2, py+2, pw, ph);
+        ctx.fillStyle = '#c2b799';
+        ctx.fillRect(px, py, pw, ph);
+        ctx.strokeStyle = 'rgba(120,105,78,0.7)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px, py, pw, ph);
+      });
+      // door window
+      ctx.fillStyle = '#c0d8ea';
+      ctx.fillRect(w*0.22, 22, w*0.56, h*0.14);
+      ctx.strokeStyle = '#8a7a60';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(w*0.22, 22, w*0.56, h*0.14);
+      // window cross
+      ctx.beginPath();
+      ctx.moveTo(w*0.5, 22); ctx.lineTo(w*0.5, 22+h*0.14);
+      ctx.moveTo(w*0.22, 22+h*0.07); ctx.lineTo(w*0.22+w*0.56, 22+h*0.07);
+      ctx.stroke();
+      // handle
+      ctx.fillStyle = '#b89830';
+      ctx.beginPath(); ctx.arc(w*0.76, h*0.5, 9, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(w*0.76, h*0.5, 5, 0, Math.PI*2);
+      ctx.fillStyle = '#d4b840'; ctx.fill();
+    });
+    const doorPanel = new THREE.Mesh(
+      new THREE.BoxGeometry(0.92, 2.12, 0.05),
+      new THREE.MeshLambertMaterial({ map: doorTex })
+    );
+    doorGroup.add(doorPanel);
+    const frameMat2 = new THREE.MeshLambertMaterial({ map: woodTexture(0) });
+    // top bar
+    const dft = new THREE.Mesh(new THREE.BoxGeometry(1.06, 0.1, 0.1), frameMat2);
+    dft.position.set(0, 1.11, 0); doorGroup.add(dft);
+    // side bars
+    [-0.51, 0.51].forEach(ox => {
+      const dfs = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.24, 0.1), frameMat2);
+      dfs.position.set(ox, 0, 0); doorGroup.add(dfs);
+    });
+    doorGroup.position.set(3.0, 1.06, roomD/2 - 0.07);
+    doorGroup.rotation.y = Math.PI;
+    scene.add(doorGroup);
+
+    // ---- ---- clock on front wall, visible when looking at the boards ----
     const clockGroup = new THREE.Group();
     clockGroup.position.set(3.8, 3.1, -roomD/2 + 0.05);
     clockGroup.rotation.y = 0;
@@ -2112,12 +2318,21 @@ window.Classroom = (function () {
         const l = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.78, 0.04), new THREE.MeshLambertMaterial({ color: 0x4a2e14 }));
         l.position.set(p[0], p[1], p[2]); g.add(l);
       });
-      const seat = new THREE.Mesh(
-        new THREE.BoxGeometry(0.45, 0.04, 0.45),
-        new THREE.MeshLambertMaterial({ color: 0x7a5a3a })
-      );
+      const seatMat = new THREE.MeshLambertMaterial({ color: 0x7a5a3a });
+      const legMat2 = new THREE.MeshLambertMaterial({ color: 0x4a2e14 });
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.04, 0.45), seatMat);
       seat.position.set(0, 0.42, 0.6);
       g.add(seat);
+      // chair back
+      const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.43, 0.38, 0.04), seatMat);
+      chairBack.position.set(0, 0.66, 0.82);
+      g.add(chairBack);
+      // back uprights
+      [-0.18, 0.18].forEach(ox => {
+        const up = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.44, 0.04), legMat2);
+        up.position.set(ox, 0.52, 0.84);
+        g.add(up);
+      });
       g.position.set(x, 0, z);
       return g;
     }
