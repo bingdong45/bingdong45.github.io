@@ -898,7 +898,8 @@ window.Classroom = (function () {
     lineMesh.position.set(ribbonCX, ribbonTopY - lineH / 2 + ribbonH3 * 0.5, ribbonZ - 0.002);
     scene.add(lineMesh);
 
-    // ribbon cards
+    // ribbon cards — each one individually hoverable and clickable
+    const rightBoardTex = null;
     contactEntries.forEach((c, i) => {
       const cy = ribbonTopY - i * ribbonStep;
       const tex = contactRibbonTexture(c.label, c.val, ribbonIcons[i] || 'email', ribbonColors[i % ribbonColors.length]);
@@ -909,24 +910,16 @@ window.Classroom = (function () {
       card.position.set(ribbonCX, cy, ribbonZ + 0.004);
       card.rotation.z = ribbonTilts[i] || 0;
       card.castShadow = true;
+      card.userData.hit = 'rightboard';
+      card.userData.contactIndex = i;
+      card.userData.label = c.label || 'Get in touch';
       scene.add(card);
+      interactive.push(card);
     });
-
-    // invisible pick plane
-    const rightBoardTex = null;
-    const contactPick = new THREE.Mesh(
-      new THREE.PlaneGeometry(ribbonW3 + 0.2, lineH + 0.18),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false })
-    );
-    contactPick.position.set(ribbonCX, ribbonTopY - lineH / 2 + ribbonH3 * 0.5, ribbonZ + 0.01);
-    contactPick.userData.hit = 'rightboard';
-    contactPick.userData.label = 'Get in touch';
-    scene.add(contactPick);
-    interactive.push(contactPick);
 
     // ---- teacher's desk — solid credenza style, close to viewer but against front-left wall ----
     const teacherDesk = new THREE.Group();
-    teacherDesk.position.set(-2.2, 0, -roomD/2 + 1.3);
+    teacherDesk.position.set(-3.5, 0, -roomD/2 + 1.3);
     scene.add(teacherDesk);
 
     const tdWoodMat = new THREE.MeshStandardMaterial({ map: woodTexture(0), roughness: 0.7, metalness: 0.0 });
@@ -1540,7 +1533,7 @@ window.Classroom = (function () {
     const bookshelfGroup = new THREE.Group();
     bookshelfGroup.position.set(roomW/2 - 0.25, 0, -2.4);
     bookshelfGroup.rotation.y = -Math.PI / 2;
-    bookshelfGroup.scale.set(1.3, 1.6, 1.3);
+    bookshelfGroup.scale.set(1.9, 1.1, 1.3);
     scene.add(bookshelfGroup);
     const shelfMat = new THREE.MeshLambertMaterial({ map: woodTexture(0) });
     // side panels
@@ -1591,7 +1584,7 @@ window.Classroom = (function () {
 
     // ---- Globe on top of the bookshelf ----
     const globeGroup = new THREE.Group();
-    globeGroup.position.set(roomW/2 - 0.25, 3.17, -2.1);
+    globeGroup.position.set(roomW/2 - 0.25, 2.20, -2.1);
     scene.add(globeGroup);
     // base
     const globeBase = new THREE.Mesh(
@@ -1713,7 +1706,7 @@ window.Classroom = (function () {
     scene.add(makePlant(roomW/2 - 0.45, roomD/2 - 0.8, 0.9));
     // Tiny succulent on the bookshelf top (next to the globe)
     const shelfPlant = makePlant(0, 0, 0.35);
-    shelfPlant.position.set(roomW/2 - 0.25, 3.17, -2.75);
+    shelfPlant.position.set(roomW/2 - 0.25, 2.20, -2.75);
     scene.add(shelfPlant);
     // Small hanging-ish plant on top of the left nameboard frame — removed (was floating mid-air)
 
@@ -2144,31 +2137,39 @@ window.Classroom = (function () {
     function setHover(obj) {
       if (hoverGlow) {
         scene.remove(hoverGlow);
-        hoverGlow.geometry.dispose();
-        hoverGlow.material.dispose();
+        hoverGlow.traverse(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
         hoverGlow = null;
       }
       if (!obj) return;
-      const geo = obj.geometry.clone();
-      const mat = new THREE.MeshBasicMaterial({
-        color: opts.accentHex,
-        transparent: true, opacity: 0.35,
-        side: THREE.DoubleSide,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
+
+      const glowGroup = new THREE.Group();
+
+      // Draw the same edges 3× at slightly different scales — simulates a thick bright border
+      const edgeGeo = new THREE.EdgesGeometry(obj.geometry, 12);
+      [1.0, 1.012, 1.024].forEach(s => {
+        const lines = new THREE.LineSegments(edgeGeo,
+          new THREE.LineBasicMaterial({
+            color: opts.accentHex, transparent: true, opacity: 1.0,
+            blending: THREE.AdditiveBlending, depthWrite: false,
+          })
+        );
+        lines.scale.setScalar(s);
+        glowGroup.add(lines);
       });
-      hoverGlow = new THREE.Mesh(geo, mat);
-      // resolve world transform in case obj is nested inside a group (my desk items are!)
+
+      // Resolve world transform — objects may live inside myDesk or other groups
       obj.updateWorldMatrix(true, false);
-      const wp = new THREE.Vector3();
-      const wq = new THREE.Quaternion();
-      const ws = new THREE.Vector3();
+      const wp = new THREE.Vector3(), wq = new THREE.Quaternion(), ws = new THREE.Vector3();
       obj.matrixWorld.decompose(wp, wq, ws);
-      hoverGlow.position.copy(wp);
-      hoverGlow.quaternion.copy(wq);
-      hoverGlow.scale.copy(ws).multiplyScalar(1.06);
-      hoverGlow.renderOrder = 999;
-      scene.add(hoverGlow);
+      glowGroup.position.copy(wp);
+      glowGroup.quaternion.copy(wq);
+      glowGroup.scale.copy(ws);
+      glowGroup.renderOrder = 999;
+      scene.add(glowGroup);
+      hoverGlow = glowGroup;
       hoverPulseStart = performance.now();
     }
 
@@ -2237,8 +2238,10 @@ window.Classroom = (function () {
 
       // animate hover glow — gentle pulse
       if (hoverGlow) {
-        const pulse = 0.35 + Math.sin((tNow - hoverPulseStart) * 0.006) * 0.18;
-        hoverGlow.material.opacity = pulse;
+        const pulse = 0.6 + Math.sin((tNow - hoverPulseStart) * 0.006) * 0.4;
+        hoverGlow.traverse(child => {
+          if (child.material) child.material.opacity = pulse;
+        });
       }
 
       renderer.render(scene, camera);
