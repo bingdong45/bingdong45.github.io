@@ -126,30 +126,41 @@ window.Classroom = (function () {
         ctx.stroke();
       }
 
-      // Title at top — chalk handwritten
-      ctx.fillStyle = '#f0ebe0';
-      ctx.font = '96px "Patrick Hand", cursive';
+      // Header — kicker + title on separate lines, no overlap
       ctx.textBaseline = 'top';
-      ctx.fillText('Experience:', 80, 40);
-      ctx.fillStyle = '#f5e090';
-      ctx.font = '78px "Patrick Hand", cursive';
-      ctx.fillText(C.title || 'things I\'ve been working on', 370, 44);
+
+      // small kicker label
+      ctx.fillStyle = 'rgba(245,224,144,0.60)';
+      ctx.font = '42px "JetBrains Mono", monospace';
+      ctx.fillText('TODAY · WHAT I\'M WORKING ON', 80, 26);
+
+      // big title
+      ctx.fillStyle = '#f0ebe0';
+      ctx.font = '88px "Patrick Hand", cursive';
+      ctx.fillText(C.title || 'Things I\'ve been working on', 80, 80);
+
+      // sub — one line below title
+      ctx.fillStyle = 'rgba(240,235,224,0.62)';
+      ctx.font = '40px "Caveat", cursive';
+      const headerSub = C.sub || '';
+      const headerSubLines = wrapText(ctx, headerSub, W - 200);
+      headerSubLines.slice(0, 1).forEach(l => ctx.fillText(l, 80, 180));
 
       // divider — chalk line
       ctx.strokeStyle = 'rgba(240,235,224,0.55)';
       ctx.lineWidth = 5;
       ctx.beginPath();
-      ctx.moveTo(80, 180);
-      ctx.lineTo(W - 80, 184);
+      ctx.moveTo(80, 232);
+      ctx.lineTo(W - 80, 236);
       ctx.stroke();
 
       // 5 zones laid out like the teacher organized them
       const slots = [
-        { x: 80,   y: 230, w: 560, h: 310 },
-        { x: 720,  y: 230, w: 560, h: 310 },
-        { x: 1360, y: 230, w: 608, h: 310 },
-        { x: 80,   y: 610, w: 870, h: 350 },
-        { x: 1030, y: 610, w: 938, h: 350 },
+        { x: 80,   y: 258, w: 560, h: 296 },
+        { x: 720,  y: 258, w: 560, h: 296 },
+        { x: 1360, y: 258, w: 608, h: 296 },
+        { x: 80,   y: 618, w: 870, h: 340 },
+        { x: 1030, y: 618, w: 938, h: 340 },
       ];
 
       items.forEach((it, i) => {
