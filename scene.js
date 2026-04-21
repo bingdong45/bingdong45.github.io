@@ -1949,6 +1949,14 @@ window.Classroom = (function () {
     makePoster(roomW/2 - 0.02, 2.1, 1.6, -Math.PI/2, 'Show Your Work', 0xc2583a);
 
     // ---- Calendar on right wall ----
+    const _calNow = new Date();
+    const _calYear = _calNow.getFullYear();
+    const _calMonth = _calNow.getMonth(); // 0-indexed
+    const _calToday = _calNow.getDate();
+    const _calMonthName = ['January','February','March','April','May','June',
+      'July','August','September','October','November','December'][_calMonth];
+    const _calDaysInMonth = new Date(_calYear, _calMonth + 1, 0).getDate();
+    const _calStartDow = new Date(_calYear, _calMonth, 1).getDay(); // 0=Sun
     const calTex = makeCanvasTexture(512, 640, (ctx, w, h) => {
       ctx.fillStyle = '#fffdf5';
       ctx.fillRect(0, 0, w, h);
@@ -1959,7 +1967,7 @@ window.Classroom = (function () {
       ctx.font = 'bold 58px "Patrick Hand", cursive';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('April 2026', w/2, 53);
+      ctx.fillText(`${_calMonthName} ${_calYear}`, w/2, 53);
       // day headers
       const days = ['S','M','T','W','T','F','S'];
       ctx.fillStyle = 'rgba(26,21,16,0.5)';
@@ -1967,23 +1975,22 @@ window.Classroom = (function () {
       ctx.textBaseline = 'top';
       days.forEach((d, i) => ctx.fillText(d, 28 + i * 66, 116));
       // numbers
-      const startDow = 3; // April 1 2026 = Wednesday
       let day = 1;
-      for (let row = 0; row < 5; row++) {
+      for (let row = 0; row < 6; row++) {
         for (let col = 0; col < 7; col++) {
           const pos = row * 7 + col;
-          if (pos < startDow || day > 30) continue;
-          const cx = 28 + col * 66, cy = 160 + row * 90;
-          if (day === 21) {
+          if (pos < _calStartDow || day > _calDaysInMonth) continue;
+          const cx = 28 + col * 66, cy = 160 + row * 76;
+          if (day === _calToday) {
             ctx.fillStyle = '#c0392b';
             ctx.beginPath(); ctx.arc(cx + 14, cy + 18, 24, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#fff';
           } else { ctx.fillStyle = col === 0 || col === 6 ? 'rgba(192,57,43,0.55)' : '#1a1510'; }
-          ctx.font = (day === 21 ? 'bold ' : '') + '34px "Patrick Hand", cursive';
+          ctx.font = (day === _calToday ? 'bold ' : '') + '34px "Patrick Hand", cursive';
           ctx.textAlign = 'left';
           ctx.fillText(day, cx, cy);
           // x through past days
-          if (day < 21 && col !== 0 && col !== 6) {
+          if (day < _calToday && col !== 0 && col !== 6) {
             ctx.strokeStyle = 'rgba(192,57,43,0.35)';
             ctx.lineWidth = 2;
             ctx.beginPath();
