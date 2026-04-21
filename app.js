@@ -48,6 +48,42 @@
     return state.timeOfDay === 'auto' ? computeTimeMode() : state.timeOfDay;
   }
 
+  // ---- intro countdown ----
+  const INTRO_SECS = 5;
+  let sceneBuilt = false;
+  let countdownDone = false;
+  let introInterval = null;
+
+  const introBarFill = document.getElementById('introBarFill');
+  const introTimer = document.getElementById('introTimer');
+  const enterBtn = document.getElementById('enterBtn');
+  const textCvBtn = document.getElementById('textCvBtn');
+
+  function dismissIntro() {
+    if (introInterval) { clearInterval(introInterval); introInterval = null; }
+    loader.classList.add('hidden');
+  }
+
+  function startCountdown() {
+    const t0 = Date.now();
+    introInterval = setInterval(() => {
+      const elapsed = (Date.now() - t0) / 1000;
+      const pct = Math.min(elapsed / INTRO_SECS, 1);
+      if (introBarFill) introBarFill.style.width = (pct * 100) + '%';
+      const rem = Math.max(0, Math.ceil(INTRO_SECS - elapsed));
+      if (introTimer) introTimer.textContent = rem > 0 ? `Entering classroom in ${rem}s…` : 'Entering classroom…';
+      if (elapsed >= INTRO_SECS) {
+        clearInterval(introInterval); introInterval = null;
+        countdownDone = true;
+        if (sceneBuilt) dismissIntro();
+      }
+    }, 100);
+  }
+  startCountdown();
+
+  if (enterBtn) enterBtn.addEventListener('click', () => { dismissIntro(); });
+  if (textCvBtn) textCvBtn.addEventListener('click', () => { dismissIntro(); enterFallback(); });
+
   // ---- init three ----
   let three;
   function initScene() {
@@ -59,7 +95,8 @@
     });
     window.Classroom.updateWindow(three, effectiveTimeMode());
     updateTimeHud(effectiveTimeMode());
-    setTimeout(() => loader.classList.add('hidden'), 300);
+    sceneBuilt = true;
+    if (countdownDone) dismissIntro();
   }
 
   // Reduced motion
@@ -480,6 +517,6 @@
     three.swayAmp = 0;
   }
 
-  // Hide loader even on error
-  setTimeout(() => loader.classList.add('hidden'), 1500);
+  // Fallback: hide loader after max wait (covers errors)
+  setTimeout(() => { if (!loader.classList.contains('hidden')) dismissIntro(); }, 8000);
 })();

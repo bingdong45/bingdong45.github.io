@@ -275,24 +275,100 @@
   #tweaks select, #tweaks input[type=color] { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: var(--cream); padding: 4px 6px; border-radius: 4px; font-family: inherit; font-size: 10px; }
   #tweaks .val { opacity: 0.5; font-size: 10px; min-width: 30px; text-align: right; }
 
-  /* Loading */
+  /* Intro / splash screen */
   #loader {
     position: fixed; inset: 0; z-index: 100;
     background: #1a1510;
     display: grid; place-items: center;
-    color: var(--cream); font-family: 'Patrick Hand', cursive;
-    transition: opacity 0.5s;
+    color: var(--cream);
+    transition: opacity 0.6s;
   }
   #loader.hidden { opacity: 0; pointer-events: none; }
-  #loader .bell {
-    font-size: 14px; letter-spacing: 0.3em; opacity: 0.6;
-    font-family: 'JetBrains Mono', monospace; text-transform: uppercase;
+
+  .intro-card {
+    width: min(480px, 90vw);
+    background: #232015;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 44px 44px 38px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    display: flex; flex-direction: column; gap: 0;
   }
-  #loader .dots { margin-top: 20px; font-size: 22px; letter-spacing: 0.3em; }
-  #loader .dots span { animation: blink 1.4s infinite; }
-  #loader .dots span:nth-child(2) { animation-delay: 0.2s; }
-  #loader .dots span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+  .intro-kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 14px;
+  }
+
+  .intro-title {
+    font-family: 'Fraunces', serif;
+    font-size: 42px; font-weight: 500; letter-spacing: -0.02em;
+    line-height: 1; color: var(--cream);
+    margin-bottom: 6px;
+  }
+
+  .intro-name {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px; color: rgba(255,255,255,0.5);
+    margin-bottom: 28px;
+  }
+
+  .intro-disclaimer {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 14px; line-height: 1.6;
+    color: rgba(255,255,255,0.42);
+    background: rgba(255,255,255,0.04);
+    border-left: 2px solid rgba(255,255,255,0.12);
+    padding: 12px 14px;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 28px;
+  }
+  .intro-disclaimer strong { color: rgba(255,255,255,0.6); }
+
+  .intro-progress {
+    margin-bottom: 24px;
+  }
+  .intro-bar {
+    height: 3px; background: rgba(255,255,255,0.1);
+    border-radius: 2px; overflow: hidden; margin-bottom: 8px;
+  }
+  .intro-bar-fill {
+    height: 100%; width: 0%;
+    background: var(--marker-soft);
+    border-radius: 2px;
+    transition: width 0.1s linear;
+  }
+  .intro-timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .intro-options {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .intro-btn {
+    display: block; text-align: center; width: 100%;
+    padding: 11px 18px;
+    font-family: 'Patrick Hand', cursive; font-size: 16px;
+    border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
+    cursor: pointer; text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    background: transparent; color: rgba(255,255,255,0.55);
+  }
+  .intro-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.22); }
+  .intro-btn.primary {
+    background: var(--cream); color: var(--ink);
+    border-color: var(--cream); font-weight: 600;
+  }
+  .intro-btn.primary:hover { background: #fff; }
+
+  @media (max-width: 520px) {
+    .intro-card { padding: 32px 28px 28px; }
+    .intro-title { font-size: 34px; }
+  }
 
   /* Fallback */
   #fallback { display: none; position: fixed; inset: 0; z-index: 200; background: var(--cream); overflow-y: auto; color: var(--ink); }
@@ -323,9 +399,22 @@
 <body>
 
 <div id="loader">
-  <div style="text-align:center">
-    <div class="bell">· taking your seat ·</div>
-    <div class="dots"><span>·</span><span>·</span><span>·</span></div>
+  <div class="intro-card">
+    <div class="intro-kicker">· a cv as a place ·</div>
+    <h1 class="intro-title">The Classroom</h1>
+    <p class="intro-name">Bingyixuan (Mason) Dong</p>
+    <div class="intro-disclaimer">
+      <strong>Work in progress:</strong> This site is still being built. Some information may be incomplete or not yet accurate.
+    </div>
+    <div class="intro-progress">
+      <div class="intro-bar"><div class="intro-bar-fill" id="introBarFill"></div></div>
+      <span class="intro-timer" id="introTimer">Entering classroom in 5s…</span>
+    </div>
+    <div class="intro-options">
+      <button class="intro-btn primary" id="enterBtn">Enter the Classroom →</button>
+      <button class="intro-btn" id="textCvBtn">Plain text CV</button>
+      <a class="intro-btn" id="oldSiteBtn" href="#" target="_blank">Old website ↗</a>
+    </div>
   </div>
 </div>
 
@@ -428,10 +517,12 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 </script>
 
 <!-- three.js -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-<script src="content.js?v=25"></script>
-<script src="scene.js?v=25"></script>
-<script src="app.js?v=25"></script>
+<script src="content.js?v=26"></script>
+<script src="scene.js?v=26"></script>
+<script src="app.js?v=26"></script>
 
 <template id="__bundler_thumbnail">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#f2e8d5"/><rect x="40" y="56" width="120" height="72" fill="#4a6e5a" rx="3"/><rect x="48" y="64" width="40" height="6" fill="#fff8e7" opacity="0.7"/><rect x="48" y="76" width="60" height="4" fill="#fff8e7" opacity="0.5"/><rect x="48" y="86" width="30" height="4" fill="#fff8e7" opacity="0.5"/><rect x="30" y="140" width="140" height="10" fill="#8b5a2b"/><rect x="50" y="150" width="8" height="25" fill="#8b5a2b"/><rect x="142" y="150" width="8" height="25" fill="#8b5a2b"/></svg>

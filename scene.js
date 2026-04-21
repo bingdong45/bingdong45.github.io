@@ -884,7 +884,7 @@ window.Classroom = (function () {
     const ribbonZ  = -roomD / 2 + 0.14;
     const ribbonW3 = 1.72, ribbonH3 = 0.30;
     const ribbonTopY = 2.35;
-    const ribbonStep = 0.42;
+    const ribbonStep = 0.48;
     const ribbonColors = ['#c0392b', '#1c2e4a', '#2471a3', '#1e8449', '#6c3483'];
     const ribbonIcons  = ['email', 'github', 'linkedin', 'website', 'cv'];
     const ribbonTilts  = [-0.065, 0.055, -0.045, 0.07, -0.04];
@@ -919,7 +919,7 @@ window.Classroom = (function () {
 
     // ---- teacher's desk — solid credenza style, close to viewer but against front-left wall ----
     const teacherDesk = new THREE.Group();
-    teacherDesk.position.set(-3.5, 0, -roomD/2 + 1.3);
+    teacherDesk.position.set(-3.5, 0, -roomD/2 + 0.6);
     scene.add(teacherDesk);
 
     const tdWoodMat = new THREE.MeshStandardMaterial({ map: woodTexture(0), roughness: 0.7, metalness: 0.0 });
@@ -1174,7 +1174,8 @@ window.Classroom = (function () {
     // Diary — proper layered book: two covers + page block, no elastic band
     const diaryColor = 0x6a2f22;
     const diaryGroup = new THREE.Group();
-    diaryGroup.position.set(-0.38, 0.900, -0.05);
+    diaryGroup.position.set(-0.52, 0.900, -0.05);
+    diaryGroup.scale.setScalar(0.72);
     diaryGroup.rotation.y = 0.2;
     myDesk.add(diaryGroup);
     // top cover (full size, with the canvas design)
@@ -1229,7 +1230,7 @@ window.Classroom = (function () {
     const textbookGroup = new THREE.Group();
     textbookGroup.position.set(0.42, 0.885, 0.15);
     textbookGroup.rotation.y = -0.18;
-    textbookGroup.scale.setScalar(0.78);
+    textbookGroup.scale.set(0.65, 0.55, 0.65);
     myDesk.add(textbookGroup);
 
     const textbookTex = textbookTexture(opts.accentHex);
@@ -1531,9 +1532,9 @@ window.Classroom = (function () {
 
     // ---- Bookshelf against the right wall, back corner ----
     const bookshelfGroup = new THREE.Group();
-    bookshelfGroup.position.set(roomW/2 - 0.25, 0, -2.4);
+    bookshelfGroup.position.set(roomW/2 - 0.25, 0, -1.8);
     bookshelfGroup.rotation.y = -Math.PI / 2;
-    bookshelfGroup.scale.set(1.9, 1.1, 1.3);
+    bookshelfGroup.scale.set(1.3, 1.0, 1.0);
     scene.add(bookshelfGroup);
     const shelfMat = new THREE.MeshLambertMaterial({ map: woodTexture(0) });
     // side panels
@@ -1584,7 +1585,7 @@ window.Classroom = (function () {
 
     // ---- Globe on top of the bookshelf ----
     const globeGroup = new THREE.Group();
-    globeGroup.position.set(roomW/2 - 0.25, 2.20, -2.1);
+    globeGroup.position.set(roomW/2 - 0.25, 2.02, -1.5);
     scene.add(globeGroup);
     // base
     const globeBase = new THREE.Mesh(
@@ -1705,8 +1706,8 @@ window.Classroom = (function () {
     // Back-right corner floor plant
     scene.add(makePlant(roomW/2 - 0.45, roomD/2 - 0.8, 0.9));
     // Tiny succulent on the bookshelf top (next to the globe)
-    const shelfPlant = makePlant(0, 0, 0.35);
-    shelfPlant.position.set(roomW/2 - 0.25, 2.20, -2.75);
+    const shelfPlant = makePlant(0, 0, 0.55);
+    shelfPlant.position.set(roomW/2 - 0.25, 2.02, -2.1);
     scene.add(shelfPlant);
     // Small hanging-ish plant on top of the left nameboard frame — removed (was floating mid-air)
 
@@ -1751,9 +1752,10 @@ window.Classroom = (function () {
     }
 
     // ---- School pennants on the front wall, left corner — pointing downward, clearly visible ----
-    function makePennant(x, y, z, color, text, textColor) {
+    function makePennant(x, y, z, color, text, textColor, rotY = 0) {
       const g = new THREE.Group();
       g.position.set(x, y, z);
+      g.rotation.y = rotY;
       // Canvas: full rectangle, text in upper half, tip implied by geometry
       const pennantTex = makeCanvasTexture(560, 320, (ctx, w, h) => {
         const grad = ctx.createLinearGradient(0, 0, 0, h);
@@ -1806,9 +1808,10 @@ window.Classroom = (function () {
       g.add(strip);
       return g;
     }
-    // Two pennants on front wall, far left (between left board and wall edge)
-    scene.add(makePennant(-4.05, 3.15, -roomD/2 + 0.04, '#c41e3a', 'WISC'));
-    scene.add(makePennant(-3.45, 3.15, -roomD/2 + 0.04, '#1e3a6e', 'UW'));
+    // Two pennants on the LEFT WALL, facing into the room (+X direction)
+    // rotation.y = -π/2 makes the ShapeGeometry face +X (into room)
+    scene.add(makePennant(-roomW/2 + 0.04, 2.85, -0.2, '#c41e3a', 'WISC', null, -Math.PI/2));
+    scene.add(makePennant(-roomW/2 + 0.04, 2.85,  0.9, '#1e3a6e', 'UW',   null, -Math.PI/2));
 
     // ---- Poster on the right wall ----
     function makePoster(x, y, z, rotY, title, bgColor) {
@@ -1942,7 +1945,7 @@ window.Classroom = (function () {
       new THREE.BoxGeometry(0.1, 1.8, 2.2),
       new THREE.MeshLambertMaterial({ map: woodTexture(0) })
     );
-    windowFrame.position.set(-roomW/2 + 0.05, 1.9, 1.2);
+    windowFrame.position.set(-roomW/2 + 0.05, 1.9, -2.0);
     scene.add(windowFrame);
 
     const windowTex = makeCanvasTexture(512, 512, (ctx, w, h) => {
@@ -1952,7 +1955,7 @@ window.Classroom = (function () {
       new THREE.PlaneGeometry(2.0, 1.6),
       new THREE.MeshBasicMaterial({ map: windowTex })
     );
-    windowGlass.position.set(-roomW/2 + 0.12, 1.9, 1.2);
+    windowGlass.position.set(-roomW/2 + 0.12, 1.9, -2.0);
     windowGlass.rotation.y = Math.PI/2;
     windowGlass.userData.hit = 'window';
     windowGlass.userData.label = 'Out the window';
@@ -1963,10 +1966,10 @@ window.Classroom = (function () {
     // window mullions (cross)
     const mullionMat = new THREE.MeshLambertMaterial({ map: woodTexture(0) });
     const mullionV = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.6, 0.04), mullionMat);
-    mullionV.position.set(-roomW/2 + 0.1, 1.9, 1.2);
+    mullionV.position.set(-roomW/2 + 0.1, 1.9, -2.0);
     scene.add(mullionV);
     const mullionH = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 2.0), mullionMat);
-    mullionH.position.set(-roomW/2 + 0.1, 1.9, 1.2);
+    mullionH.position.set(-roomW/2 + 0.1, 1.9, -2.0);
     scene.add(mullionH);
 
     // ---- clock on front wall, visible when looking at the boards ----
