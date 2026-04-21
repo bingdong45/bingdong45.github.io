@@ -208,85 +208,84 @@ window.Classroom = (function () {
   function nameBoardTexture(accentColor) {
     const C = (window.CONTENT && window.CONTENT.leftboard) || {};
     const P = (window.CONTENT && window.CONTENT.profile) || {};
-    // parse title like "Hi, I'm Mason." into greeting + name
-    const fullTitle = C.title || "Hi, I'm there.";
-    let greeting = 'hello,';
-    let name = fullTitle;
-    const m = fullTitle.match(/^([^,]+,)\s*(.+)$/);
-    if (m) { greeting = m[1].toLowerCase(); name = m[2]; }
     return makeCanvasTexture(1280, 1600, (ctx, W, H) => {
-      // chalkboard green
-      ctx.fillStyle = '#2d5a27';
+      // background
+      ctx.fillStyle = '#1d3d18';
       ctx.fillRect(0, 0, W, H);
-      // chalk dust smears
-      for (let i = 0; i < 20; i++) {
-        ctx.strokeStyle = `rgba(255,255,255,${0.02 + Math.random() * 0.05})`;
-        ctx.lineWidth = 4 + Math.random() * 14;
+
+      // subtle chalk dust
+      for (let i = 0; i < 10; i++) {
+        ctx.strokeStyle = `rgba(255,255,255,${0.015 + Math.random() * 0.035})`;
+        ctx.lineWidth = 12 + Math.random() * 24;
         ctx.beginPath();
         const sx = Math.random() * W, sy = Math.random() * H;
         ctx.moveTo(sx, sy);
-        ctx.lineTo(sx + 180 * (Math.random() - 0.5), sy + 60 * (Math.random() - 0.5));
+        ctx.lineTo(sx + 220 * (Math.random() - 0.5), sy + 90 * (Math.random() - 0.5));
         ctx.stroke();
       }
 
-      // greeting header — chalk yellow
-      ctx.fillStyle = '#f5e090';
-      ctx.font = '150px "Patrick Hand", cursive';
-      ctx.fillText(greeting, 60, 165);
+      // kicker
+      ctx.fillStyle = 'rgba(245,224,144,0.55)';
+      ctx.font = '46px "JetBrains Mono", monospace';
+      ctx.fillText('· ABOUT ME ·', 68, 90);
 
-      // name — chalk white
+      // greeting — big chalk yellow
+      ctx.fillStyle = '#f5e090';
+      ctx.font = '185px "Patrick Hand", cursive';
+      ctx.fillText("Hi, I'm", 60, 300);
+
+      // name — very large
       ctx.fillStyle = '#f0ebe0';
-      ctx.font = '140px "Patrick Hand", cursive';
-      ctx.fillText(name, 60, 320);
+      ctx.font = '210px "Fraunces", serif';
+      ctx.fillText('Mason.', 52, 538);
 
       // underline
       ctx.strokeStyle = '#f5e090';
-      ctx.lineWidth = 7;
+      ctx.lineWidth = 8;
       ctx.beginPath();
-      ctx.moveTo(60, 352);
-      ctx.lineTo(960, 358);
+      ctx.moveTo(52, 576);
+      ctx.lineTo(W - 52, 576);
       ctx.stroke();
 
-      // role / subtitle
-      ctx.fillStyle = 'rgba(240,235,224,0.78)';
-      ctx.font = '52px "Caveat", cursive';
-      const subLines = wrapText(ctx, C.sub || P.role || '', W - 130);
-      subLines.slice(0, 3).forEach((line, i) => ctx.fillText(line, 60, 430 + i * 60));
+      // role lines — large enough to read
+      ctx.fillStyle = 'rgba(240,235,224,0.92)';
+      ctx.font = '84px "Caveat", cursive';
+      ctx.fillText('CS & Data Science', 64, 692);
+      ctx.font = '74px "Caveat", cursive';
+      ctx.fillStyle = 'rgba(240,235,224,0.72)';
+      ctx.fillText('UW–Madison  ·  AI & Education', 64, 784);
 
-      // body — first paragraph
-      ctx.fillStyle = 'rgba(240,235,224,0.88)';
-      ctx.font = '48px "Caveat", cursive';
-      const bodyText = (C.body && C.body[0]) || '';
-      const bodyLines = wrapText(ctx, bodyText, W - 130);
-      const bodyTop = 440 + subLines.length * 60 + 28;
-      const maxBodyLines = Math.floor((H - bodyTop - 200) / 56);
-      bodyLines.slice(0, maxBodyLines).forEach((line, i) =>
-        ctx.fillText(line, 60, bodyTop + i * 56));
+      // tag chips
+      const tags = ['AI', 'Education', 'HRI', 'VR', 'NLP'];
+      ctx.font = '52px "JetBrains Mono", monospace';
+      let tx = 64;
+      const tagY = 900;
+      tags.forEach(tag => {
+        const tw = ctx.measureText(tag).width;
+        const pad = 22;
+        ctx.fillStyle = 'rgba(245,224,144,0.13)';
+        ctx.strokeStyle = 'rgba(245,224,144,0.36)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(tx - pad / 2, tagY - 46, tw + pad, 66, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#f5e090';
+        ctx.fillText(tag, tx, tagY);
+        tx += tw + pad + 22;
+      });
 
-      // arrow + click cue
-      ctx.strokeStyle = '#f0ebe0';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(60, H - 195);
-      ctx.lineTo(380, H - 195);
-      ctx.moveTo(356, H - 213);
-      ctx.lineTo(380, H - 195);
-      ctx.lineTo(356, H - 177);
-      ctx.stroke();
-      ctx.fillStyle = '#f0ebe0';
-      ctx.font = '58px "Patrick Hand", cursive';
-      ctx.fillText('click for more', 60, H - 135);
+      // CTA
+      ctx.fillStyle = 'rgba(240,235,224,0.82)';
+      ctx.font = '86px "Patrick Hand", cursive';
+      ctx.fillText('click for more →', 64, H - 88);
 
       // dashed border
-      ctx.strokeStyle = 'rgba(240,235,224,0.4)';
-      ctx.setLineDash([14, 11]);
+      ctx.strokeStyle = 'rgba(240,235,224,0.2)';
+      ctx.setLineDash([18, 12]);
       ctx.lineWidth = 4;
-      ctx.strokeRect(44, 50, W - 88, H - 160);
+      ctx.strokeRect(36, 36, W - 72, H - 72);
       ctx.setLineDash([]);
-
-      ctx.fillStyle = '#f5e090';
-      ctx.font = '44px "JetBrains Mono", monospace';
-      ctx.fillText('→ read', W - 270, H - 72);
     });
   }
 
@@ -889,13 +888,14 @@ window.Classroom = (function () {
     const ribbonIcons  = ['email', 'github', 'linkedin', 'website', 'cv'];
     const ribbonTilts  = [-0.065, 0.055, -0.045, 0.07, -0.04];
 
-    // vertical center line
-    const lineH = ribbonStep * (contactEntries.length - 1) + ribbonH3 * 2;
+    // vertical center line — spans top-edge of first card to bottom-edge of last card
+    const lineH = ribbonStep * (contactEntries.length - 1) + ribbonH3;
+    const lineCY = ribbonTopY - (ribbonStep * (contactEntries.length - 1)) / 2;
     const lineMesh = new THREE.Mesh(
       new THREE.CylinderGeometry(0.006, 0.006, lineH, 8),
       new THREE.MeshStandardMaterial({ color: 0x1a1510, roughness: 0.5, metalness: 0.2 })
     );
-    lineMesh.position.set(ribbonCX, ribbonTopY - lineH / 2 + ribbonH3 * 0.5, ribbonZ - 0.002);
+    lineMesh.position.set(ribbonCX, lineCY, ribbonZ - 0.002);
     scene.add(lineMesh);
 
     // ribbon cards — each one individually hoverable and clickable

@@ -49,7 +49,7 @@
   }
 
   // ---- intro countdown ----
-  const INTRO_SECS = 5;
+  const INTRO_SECS = 3;
   let sceneBuilt = false;
   let countdownDone = false;
   let introInterval = null;
