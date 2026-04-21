@@ -942,7 +942,7 @@ window.Classroom = (function () {
       new THREE.BoxGeometry(1.7, 2.2, 0.1),
       new THREE.MeshLambertMaterial({ map: woodTexture(0) })
     );
-    leftBoardFrame.position.set(-3.5, 1.85, -roomD/2 + 0.06);
+    leftBoardFrame.position.set(-3.5, 2.2, -roomD/2 + 0.06);
     leftBoardFrame.castShadow = true;
     leftBoardFrame.receiveShadow = true;
     scene.add(leftBoardFrame);
@@ -952,7 +952,7 @@ window.Classroom = (function () {
       new THREE.PlaneGeometry(1.6, 2.1),
       new THREE.MeshLambertMaterial({ map: leftBoardTex })
     );
-    leftBoard.position.set(-3.5, 1.85, -roomD/2 + 0.12);
+    leftBoard.position.set(-3.5, 2.2, -roomD/2 + 0.12);
     leftBoard.rotation.y = 0;
     leftBoard.userData.hit = 'leftboard';
     leftBoard.userData.label = 'About me';
