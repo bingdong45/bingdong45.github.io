@@ -3,23 +3,25 @@
 <head>
 <meta charset="utf-8" />
 <title>CV — Bingyixuan Dong</title>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0DX00SNE6S"></script>
+<style>html,body{margin:0;background:#1a1510;}</style>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
+  var redirected = false;
+  function go(){ if(!redirected){ redirected = true; window.location.replace('/BingyixuanResume.pdf'); } }
   gtag('js', new Date());
-  gtag('config', 'G-0DX00SNE6S');
+  gtag('config', 'G-0DX00SNE6S', { transport_type: 'beacon' });
   gtag('event', 'file_download', {
     file_name: 'BingyixuanResume.pdf',
     link_url: '/BingyixuanResume.pdf',
-    source: 'cv_redirect'
+    source: 'cv_redirect',
+    event_callback: go,
+    event_timeout: 400
   });
-  setTimeout(function(){ window.location.replace('/BingyixuanResume.pdf'); }, 50);
+  setTimeout(go, 500);
 </script>
-<meta http-equiv="refresh" content="1; url=/BingyixuanResume.pdf" />
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0DX00SNE6S"></script>
+<meta http-equiv="refresh" content="2; url=/BingyixuanResume.pdf" />
 </head>
-<body style="font-family:system-ui,sans-serif;padding:2rem;color:#333;">
-<p>Loading CV… If you are not redirected, <a href="/BingyixuanResume.pdf">click here</a>.</p>
-</body>
+<body></body>
 </html>
