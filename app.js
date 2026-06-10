@@ -59,9 +59,17 @@
   const enterBtn = document.getElementById('enterBtn');
   const textCvBtn = document.getElementById('textCvBtn');
 
+  let entered = false;
   function dismissIntro() {
     if (introInterval) { clearInterval(introInterval); introInterval = null; }
     loader.classList.add('hidden');
+    if (!entered) {
+      entered = true;
+      canvas.classList.add('live');
+      if (three && three.playIntro && !reducedMotion) three.playIntro();
+      // let the hint linger, then quietly fade it away
+      if (hud) setTimeout(() => hud.classList.add('faded'), 14000);
+    }
   }
 
   function startCountdown() {
@@ -118,7 +126,9 @@
     three.targetPitch = THREE.MathUtils.clamp(-ny * MAX_PITCH * state.sensitivity, -MAX_PITCH, MAX_PITCH);
   }
 
+  let pointerX = null, pointerY = null;
   canvas.addEventListener('mousemove', (e) => {
+    pointerX = e.clientX; pointerY = e.clientY;
     if (reducedMotion && !dragging) return;
     const nx = (e.clientX / window.innerWidth) * 2 - 1;
     const ny = (e.clientY / window.innerHeight) * 2 - 1;
@@ -127,6 +137,7 @@
     }
     handleHover(e.clientX, e.clientY);
   });
+  canvas.addEventListener('mouseleave', () => { pointerX = pointerY = null; });
 
   canvas.addEventListener('mousedown', (e) => {
     dragging = true; usingDrag = true; lastX = e.clientX; lastY = e.clientY;
@@ -199,6 +210,17 @@
       openOverlay(currentHover.userData.hit, currentHover.userData);
     }
   });
+
+  // While the camera eases toward its target, the world point under the cursor
+  // drifts — re-run hover every frame so the glow (and clicks) stay accurate.
+  (function hoverTick() {
+    if (pointerX !== null && !dragging &&
+        !overlay.classList.contains('open') &&
+        !document.body.classList.contains('fallback-view')) {
+      handleHover(pointerX, pointerY);
+    }
+    requestAnimationFrame(hoverTick);
+  })();
 
   // ---- overlay ----
   function openOverlay(key, extra) {

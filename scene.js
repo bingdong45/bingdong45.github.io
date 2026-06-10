@@ -689,6 +689,8 @@ window.Classroom = (function () {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -730,17 +732,24 @@ window.Classroom = (function () {
     const hemi = new THREE.HemisphereLight(0xfdecc0, 0x3a3a20, 0.4);
     scene.add(hemi);
 
-    // A soft window "god ray" as a plane with additive material
-    const rayGeo = new THREE.PlaneGeometry(2.2, 4.5);
-    const rayMat = new THREE.MeshBasicMaterial({
-      color: 0xffcf88, transparent: true, opacity: 0.08,
-      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
-    });
-    const ray = new THREE.Mesh(rayGeo, rayMat);
-    ray.position.set(-2.5, 1.0, 0);
-    ray.rotation.y = Math.PI / 2.6;
-    ray.rotation.z = -0.15;
-    scene.add(ray);
+    // Soft window "god rays" — one volume per window, additive planes
+    const rayMats = [];
+    function addRay(z) {
+      const rayGeo = new THREE.PlaneGeometry(2.2, 4.5);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0xffcf88, transparent: true, opacity: 0.08,
+        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+      });
+      const ray = new THREE.Mesh(rayGeo, mat);
+      ray.position.set(-2.5, 1.0, z);
+      ray.rotation.y = Math.PI / 2.6;
+      ray.rotation.z = -0.15;
+      scene.add(ray);
+      rayMats.push(mat);
+      return mat;
+    }
+    const rayMat = addRay(0);
+    addRay(2.6);
 
     // ---- room shell ----
     const roomW = 9, roomH = 3.5, roomD = 8;
@@ -1109,6 +1118,30 @@ window.Classroom = (function () {
       pen.rotation.z = (i - 1) * 0.1;
       teacherDesk.add(pen);
     });
+    // the classic apple for the teacher
+    const apple = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 18, 14),
+      new THREE.MeshStandardMaterial({ color: 0xc23b2a, roughness: 0.35, metalness: 0.0 })
+    );
+    apple.scale.y = 0.92;
+    apple.position.set(0.05, 0.975, -0.22);
+    apple.castShadow = true;
+    teacherDesk.add(apple);
+    const appleStem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.004, 0.005, 0.035, 6),
+      new THREE.MeshLambertMaterial({ color: 0x4a3018 })
+    );
+    appleStem.position.set(0.05, 1.025, -0.22);
+    appleStem.rotation.z = 0.2;
+    teacherDesk.add(appleStem);
+    const appleLeaf = new THREE.Mesh(
+      new THREE.SphereGeometry(0.016, 8, 6),
+      new THREE.MeshLambertMaterial({ color: 0x5a8a3a })
+    );
+    appleLeaf.scale.set(1.4, 0.35, 0.7);
+    appleLeaf.position.set(0.075, 1.035, -0.22);
+    appleLeaf.rotation.z = -0.4;
+    teacherDesk.add(appleLeaf);
 
     // ---- trash can in front-left corner ----
     const trashGroup = new THREE.Group();
@@ -1144,6 +1177,17 @@ window.Classroom = (function () {
     );
     crumple.position.set(0.02, 0.28, 0.03);
     trashGroup.add(crumple);
+    // a couple of missed shots on the floor next to the can
+    [[0.42, 0.28, 0.55], [0.65, -0.1, 0.5]].forEach(([cx, cz, cs], i) => {
+      const miss = new THREE.Mesh(
+        new THREE.SphereGeometry(0.06 * cs, 6, 5),
+        new THREE.MeshLambertMaterial({ color: i ? 0xe8e2d2 : 0xf0ebe0 })
+      );
+      miss.scale.y = 0.8;
+      miss.position.set(cx, 0.06 * cs * 0.8, cz);
+      miss.rotation.y = i * 1.7;
+      trashGroup.add(miss);
+    });
 
     // ---- my desk group (so we can scale uniformly) ----
     const myDesk = new THREE.Group();
@@ -1520,27 +1564,52 @@ window.Classroom = (function () {
     laptopScreen.userData.label = 'Open live demo';
     interactive.push(laptopScreen);
 
-    // Pencil
+    // Pencil — built as one group so every part stays aligned, resting in the open
+    // space in front of the laptop where it's actually visible (it's clickable).
+    const pencilGroup = new THREE.Group();
+    pencilGroup.position.set(-0.32, 0.889, 0.02);
+    pencilGroup.rotation.y = 1.25;
+    myDesk.add(pencilGroup);
     const pencil = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.008, 0.008, 0.18, 8),
+      new THREE.CylinderGeometry(0.008, 0.008, 0.16, 6),
       new THREE.MeshLambertMaterial({ color: 0xf5c542 })
     );
-    pencil.rotation.z = Math.PI/2;
-    pencil.rotation.y = 0.3;
-    pencil.position.set(-0.55, 0.885, -0.28);
+    pencil.rotation.z = Math.PI / 2;
     pencil.userData.hit = 'pencil';
     pencil.userData.label = 'A fun fact';
-    myDesk.add(pencil);
+    pencilGroup.add(pencil);
     interactive.push(pencil);
-    // pencil tip
+    // sharpened wood tip (cone apex pointing -x)
     const pencilTip = new THREE.Mesh(
-      new THREE.ConeGeometry(0.009, 0.03, 8),
+      new THREE.ConeGeometry(0.008, 0.026, 6),
       new THREE.MeshLambertMaterial({ color: 0xf0d8a0 })
     );
-    pencilTip.rotation.z = -Math.PI/2;
-    pencilTip.rotation.y = 0.3;
-    pencilTip.position.set(-0.55 - Math.cos(0.3)*0.105, 0.815, -0.28 - Math.sin(0.3)*0.105);
-    myDesk.add(pencilTip);
+    pencilTip.rotation.z = Math.PI / 2;
+    pencilTip.position.set(-0.093, 0, 0);
+    pencilGroup.add(pencilTip);
+    // graphite point
+    const pencilLead = new THREE.Mesh(
+      new THREE.ConeGeometry(0.0035, 0.012, 6),
+      new THREE.MeshLambertMaterial({ color: 0x2a2a2a })
+    );
+    pencilLead.rotation.z = Math.PI / 2;
+    pencilLead.position.set(-0.108, 0, 0);
+    pencilGroup.add(pencilLead);
+    // metal ferrule + pink eraser at the other end
+    const ferrule = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.0085, 0.0085, 0.014, 8),
+      new THREE.MeshStandardMaterial({ color: 0xb8c4cc, roughness: 0.35, metalness: 0.8 })
+    );
+    ferrule.rotation.z = Math.PI / 2;
+    ferrule.position.set(0.087, 0, 0);
+    pencilGroup.add(ferrule);
+    const pencilEraser = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.008, 0.008, 0.014, 8),
+      new THREE.MeshLambertMaterial({ color: 0xe89aa4 })
+    );
+    pencilEraser.rotation.z = Math.PI / 2;
+    pencilEraser.position.set(0.1, 0, 0);
+    pencilGroup.add(pencilEraser);
 
     // Coffee mug — LatheGeometry for a proper curved silhouette
     const mugProfile = [
@@ -1893,46 +1962,55 @@ window.Classroom = (function () {
     }
     // Two pennants on the LEFT WALL, facing into the room (+X direction)
     // rotation.y = -π/2 makes the ShapeGeometry face +X (into room)
-    scene.add(makePennant(-roomW/2 + 0.04, 2.85, -0.2, '#c41e3a', 'WISC', null, -Math.PI/2));
-    scene.add(makePennant(-roomW/2 + 0.04, 2.85,  0.9, '#1e3a6e', 'UW',   null, -Math.PI/2));
+    scene.add(makePennant(-roomW/2 + 0.04, 2.85, 2.25, '#c41e3a', 'WISC', null, -Math.PI/2));
+    scene.add(makePennant(-roomW/2 + 0.04, 2.85, 2.95, '#1e3a6e', 'UW',   null, -Math.PI/2));
 
     // ---- Poster on the right wall ----
     function makePoster(x, y, z, rotY, title, bgColor) {
+      // cream paper with a colored heading — stays readable under every lighting preset
+      const accentCss = `#${new THREE.Color(bgColor).getHexString()}`;
       const posterTex = makeCanvasTexture(512, 700, (ctx, w, h) => {
-        ctx.fillStyle = bgColor;
+        ctx.fillStyle = '#f8f2df';
         ctx.fillRect(0, 0, w, h);
-        // decorative marks
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        for (let i = 0; i < 14; i++) {
-          ctx.beginPath();
-          ctx.arc(Math.random() * w, Math.random() * h, 8 + Math.random() * 20, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        // big title
-        ctx.fillStyle = '#fff8ea';
-        ctx.font = 'bold 80px "Patrick Hand", cursive';
+        // paper grain
+        ctx.fillStyle = 'rgba(120,100,70,0.05)';
+        for (let i = 0; i < 500; i++) ctx.fillRect(Math.random() * w, Math.random() * h, 2, 1);
+        // colored border
+        ctx.strokeStyle = accentCss;
+        ctx.lineWidth = 10;
+        ctx.strokeRect(14, 14, w - 28, h - 28);
+        // big title in the accent color
+        ctx.fillStyle = accentCss;
+        ctx.font = 'bold 84px "Patrick Hand", cursive';
         ctx.textBaseline = 'top';
+        ctx.textAlign = 'center';
         const words = title.split(' ');
-        let yy = 60;
-        words.forEach(wd => { ctx.fillText(wd, 48, yy); yy += 78; });
+        let yy = 78;
+        words.forEach(wd => { ctx.fillText(wd, w / 2, yy); yy += 92; });
         // divider
-        ctx.strokeStyle = '#fff8ea';
+        ctx.strokeStyle = accentCss;
         ctx.lineWidth = 5;
         ctx.beginPath();
-        ctx.moveTo(48, yy + 10);
-        ctx.lineTo(w - 48, yy + 14);
+        ctx.moveTo(88, yy + 18);
+        ctx.lineTo(w - 88, yy + 22);
         ctx.stroke();
-        // subtitle
-        ctx.font = 'italic 40px "Caveat", cursive';
-        ctx.fillText('— classroom rules —', 48, yy + 30);
+        // subtitle in ink
+        ctx.fillStyle = 'rgba(26,21,16,0.65)';
+        ctx.font = 'italic 44px "Caveat", cursive';
+        ctx.fillText('— classroom rules —', w / 2, yy + 44);
+        // little star doodles at the bottom
+        ctx.fillStyle = accentCss;
+        ctx.font = '52px "Patrick Hand", cursive';
+        ctx.fillText('★  ★  ★', w / 2, h - 110);
+        ctx.textAlign = 'left';
         // corner tape strips
         ctx.save();
-        ctx.fillStyle = 'rgba(255,240,180,0.7)';
+        ctx.fillStyle = 'rgba(220,200,140,0.8)';
         ctx.translate(40, 30); ctx.rotate(-0.3);
         ctx.fillRect(-30, -10, 80, 22);
         ctx.restore();
         ctx.save();
-        ctx.fillStyle = 'rgba(255,240,180,0.7)';
+        ctx.fillStyle = 'rgba(220,200,140,0.8)';
         ctx.translate(w - 40, 30); ctx.rotate(0.3);
         ctx.fillRect(-50, -10, 80, 22);
         ctx.restore();
@@ -2097,53 +2175,72 @@ window.Classroom = (function () {
     jacket.position.set(0.5, 2.0, roomD/2 - 0.16);
     scene.add(jacket);
 
-    // ---- window on the left wall ----
-    const windowFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(0.1, 1.8, 2.2),
-      new THREE.MeshLambertMaterial({ map: woodTexture(0) })
-    );
-    windowFrame.position.set(-roomW/2 + 0.05, 1.9, -2.0);
-    scene.add(windowFrame);
-
-    const windowTex = makeCanvasTexture(512, 512, (ctx, w, h) => {
-      drawWindowScene(ctx, w, h, 'afternoon');
-    });
-    const windowGlass = new THREE.Mesh(
-      new THREE.PlaneGeometry(2.0, 1.6),
-      new THREE.MeshBasicMaterial({ map: windowTex })
-    );
-    windowGlass.position.set(-roomW/2 + 0.12, 1.9, -2.0);
-    windowGlass.rotation.y = Math.PI/2;
-    windowGlass.userData.hit = 'window';
-    windowGlass.userData.label = 'Out the window';
-    windowGlass.userData.isWindow = true;
-    scene.add(windowGlass);
-    interactive.push(windowGlass);
-
-    // window mullions (cross)
+    // ---- windows on the left wall — two views of ONE sky: only the first
+    // window contains the sun/moon, the second shows the rest of the campus ----
+    const windowTexes = [];
     const mullionMat = new THREE.MeshLambertMaterial({ map: woodTexture(0) });
-    const mullionV = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.6, 0.04), mullionMat);
-    mullionV.position.set(-roomW/2 + 0.1, 1.9, -2.0);
-    scene.add(mullionV);
-    const mullionH = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 2.0), mullionMat);
-    mullionH.position.set(-roomW/2 + 0.1, 1.9, -2.0);
-    scene.add(mullionH);
-
-    // ---- venetian blinds on window (partially open) ----
     const slatMat = new THREE.MeshLambertMaterial({ color: 0xe8e2d0, side: THREE.DoubleSide });
-    for (let i = 0; i < 14; i++) {
-      const slat = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.065, 2.0), slatMat);
-      slat.position.set(-roomW/2 + 0.22, 1.1 + i * 0.11, -2.0);
-      slat.rotation.z = 0.38;
-      scene.add(slat);
-    }
-    // pull cord
     const cordMat = new THREE.MeshLambertMaterial({ color: 0xd0c4a8 });
-    [-0.82, 0.82].forEach(oz => {
-      const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 1.54, 5), cordMat);
-      cord.position.set(-roomW/2 + 0.22, 1.54, -2.0 + oz);
-      scene.add(cord);
-    });
+
+    let windowGlass = null;
+    function buildWindow(zc, variant) {
+      const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 1.8, 2.2),
+        new THREE.MeshLambertMaterial({ map: woodTexture(0) })
+      );
+      frame.position.set(-roomW/2 + 0.05, 1.9, zc);
+      scene.add(frame);
+
+      const tex = makeCanvasTexture(512, 512, (ctx, w, h) => {
+        drawWindowScene(ctx, w, h, 'afternoon', variant);
+      });
+      windowTexes.push({ tex, variant });
+      const glass = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.0, 1.6),
+        new THREE.MeshBasicMaterial({ map: tex })
+      );
+      glass.position.set(-roomW/2 + 0.12, 1.9, zc);
+      glass.rotation.y = Math.PI/2;
+      glass.userData.hit = 'window';
+      glass.userData.label = 'Out the window';
+      glass.userData.isWindow = true;
+      scene.add(glass);
+      interactive.push(glass);
+      if (!windowGlass) windowGlass = glass;
+
+      // mullions (cross)
+      const mullionV = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.6, 0.04), mullionMat);
+      mullionV.position.set(-roomW/2 + 0.1, 1.9, zc);
+      scene.add(mullionV);
+      const mullionH = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 2.0), mullionMat);
+      mullionH.position.set(-roomW/2 + 0.1, 1.9, zc);
+      scene.add(mullionH);
+
+      // venetian blinds — pulled most of the way up so the view stays visible
+      for (let i = 0; i < 6; i++) {
+        const slat = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.065, 2.0), slatMat);
+        slat.position.set(-roomW/2 + 0.22, 2.62 - i * 0.052, zc);
+        slat.rotation.z = 1.05;
+        scene.add(slat);
+      }
+      // headrail box at the top
+      const headrail = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 2.06), mullionMat);
+      headrail.position.set(-roomW/2 + 0.18, 2.74, zc);
+      scene.add(headrail);
+      // pull cords (short, since blinds are raised)
+      [-0.82, 0.82].forEach(oz => {
+        const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.55, 5), cordMat);
+        cord.position.set(-roomW/2 + 0.22, 2.4, zc + oz);
+        scene.add(cord);
+      });
+      // sill
+      const sill = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 2.3), mullionMat);
+      sill.position.set(-roomW/2 + 0.08, 0.98, zc);
+      scene.add(sill);
+    }
+    buildWindow(-2.0, 0);
+    buildWindow(0.6, 1);
+    const windowTex = windowTexes[0].tex;
 
     // ---- door on back wall (right side) ----
     const doorGroup = new THREE.Group();
@@ -2298,19 +2395,37 @@ window.Classroom = (function () {
     art.rotation.y = Math.PI;
     scene.add(art);
 
-    // ---- ceiling fluorescent stand-ins (warm) ----
-    for (let i = -1; i <= 1; i++) {
-      const lightFix = new THREE.Mesh(
-        new THREE.BoxGeometry(1.2, 0.06, 0.3),
-        new THREE.MeshBasicMaterial({ color: 0xfff8e8 })
+    // ---- ceiling fluorescent fixtures — symmetric 2×3 grid, warm panels in metal trims ----
+    const fixtureTrimMat = new THREE.MeshLambertMaterial({ color: 0xc9c4b2 });
+    const fixturePanelMat = new THREE.MeshBasicMaterial({ color: 0xfff6dc });
+    const pointLights = [];
+    const fixtureSpots = [[-2.5, -1.7], [0, -1.7], [2.5, -1.7], [-2.5, 1.3], [0, 1.3], [2.5, 1.3]];
+    fixtureSpots.forEach(([fx, fz], i) => {
+      const trim = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.05, 0.42), fixtureTrimMat);
+      trim.position.set(fx, roomH - 0.035, fz);
+      scene.add(trim);
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.045, 0.3), fixturePanelMat);
+      panel.position.set(fx, roomH - 0.04, fz);
+      scene.add(panel);
+      // soft additive halo just below each panel
+      const halo = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.5, 0.6),
+        new THREE.MeshBasicMaterial({
+          color: 0xfff0c8, transparent: true, opacity: 0.10,
+          blending: THREE.AdditiveBlending, depthWrite: false,
+        })
       );
-      lightFix.position.set(i * 2.5, roomH - 0.05, -1 + i * 0.5);
-      scene.add(lightFix);
-
-      const pl = new THREE.PointLight(0xfff8e8, 0.55, 7, 2);
-      pl.position.set(i * 2.5, roomH - 0.12, -1 + i * 0.5);
-      scene.add(pl);
-    }
+      halo.rotation.x = Math.PI / 2;
+      halo.position.set(fx, roomH - 0.09, fz);
+      scene.add(halo);
+      // real lights only on front row + back-center (keeps light where the viewer looks)
+      if (i < 3 || i === 4) {
+        const pl = new THREE.PointLight(0xfff8e8, i < 3 ? 0.5 : 0.35, 7, 2);
+        pl.position.set(fx, roomH - 0.15, fz);
+        scene.add(pl);
+        pointLights.push(pl);
+      }
+    });
 
     // ---- extra desks to either side to make it feel like a classroom ----
     function otherDesk(x, z) {
@@ -2344,7 +2459,37 @@ window.Classroom = (function () {
       return g;
     }
     // other student desks — flanking mine and one row behind, leaving the front clear
-    [[-2.4, 0.0], [2.4, 0.0], [-2.4, 1.6], [2.4, 1.6], [0, 2.4]].forEach(([x,z]) => scene.add(otherDesk(x, z)));
+    [[-2.4, 0.0], [2.4, 0.0], [-2.4, 1.6], [2.4, 1.6], [0, 2.4]].forEach(([x,z], i) => {
+      const d = otherDesk(x, z);
+      // leave a sheet of loose paper on a few desks
+      if (i !== 1 && i !== 4) {
+        const sheet = new THREE.Mesh(
+          new THREE.BoxGeometry(0.24, 0.002, 0.3),
+          new THREE.MeshLambertMaterial({ color: 0xfaf6e8 })
+        );
+        sheet.position.set(0.15 - (i % 2) * 0.3, 0.812, 0.05);
+        sheet.rotation.y = (i * 0.7) % 1 - 0.4;
+        d.add(sheet);
+      }
+      scene.add(d);
+    });
+
+    // ---- paper airplane resting on the right neighbor's desk ----
+    const planeMat = new THREE.MeshLambertMaterial({ color: 0xfbf8ec, side: THREE.DoubleSide });
+    const paperPlane = new THREE.Group();
+    [[1, 0], [-1, 0]].forEach(([sx]) => {
+      const wingGeo = new THREE.BufferGeometry();
+      wingGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
+        0, 0.0, -0.13,
+        sx * 0.085, 0.028, 0.11,
+        0, 0.058, 0.11,
+      ]), 3));
+      wingGeo.computeVertexNormals();
+      paperPlane.add(new THREE.Mesh(wingGeo, planeMat));
+    });
+    paperPlane.position.set(2.25, 0.812, -0.05);
+    paperPlane.rotation.y = 2.4;
+    scene.add(paperPlane);
 
     // ---- dust motes (cheap sprites) ----
     const dustGroup = new THREE.Group();
@@ -2360,7 +2505,7 @@ window.Classroom = (function () {
     }
     dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
     const dustMat = new THREE.PointsMaterial({
-      color: 0xfff0c0, size: 0.015, transparent: true, opacity: 0.5,
+      color: 0xfff0c0, size: 0.014, transparent: true, opacity: 0.32,
       depthWrite: false, blending: THREE.AdditiveBlending,
     });
     const dust = new THREE.Points(dustGeo, dustMat);
@@ -2417,15 +2562,26 @@ window.Classroom = (function () {
       swayAmp: opts.sway || 0.35,
       dust: (opts.dust !== 'off'),
       clockHands: { hour: hourPivot, min: minPivot, sec: secPivot },
-      windowTex, windowMat: windowGlass.material,
+      windowTex, windowTexes, windowMat: windowGlass.material,
       wbTex, leftBoardTex, bulletinMat: bulletin.material,
       laptopScreenMat: laptopScreen.material,
       paperMat: null,
       textbookMats: tbCover.material,
-      rayMat, ambient, key, fill, hemi, scene,
+      rayMat, rayMats, ambient, key, fill, hemi, pointLights, dustMat, scene,
+      rayBase: 0.08, dustBase: 0.32,
       interactive,
       setHover,
       accentHex: opts.accentHex,
+      introActive: false, introStart: 0,
+    };
+
+    // gentle dolly-in when the visitor enters the room
+    const CAM_HOME = new THREE.Vector3(0, 1.65, 0.8);
+    const CAM_INTRO = new THREE.Vector3(0, 1.84, 1.9);
+    state.playIntro = function () {
+      camera.position.copy(CAM_INTRO);
+      state.introActive = true;
+      state.introStart = performance.now();
     };
 
     // resize
@@ -2440,9 +2596,18 @@ window.Classroom = (function () {
     function frame(tNow) {
       const dt = Math.min(0.05, (tNow - t0) / 1000);
       t0 = tNow;
-      // ease yaw/pitch toward target
-      state.yaw += (state.targetYaw - state.yaw) * state.damping;
-      state.pitch += (state.targetPitch - state.pitch) * state.damping;
+      // ease yaw/pitch toward target — frame-rate independent (same feel at 60Hz and 120Hz)
+      const ease = state.damping >= 1 ? 1 : 1 - Math.pow(1 - state.damping, dt * 60);
+      state.yaw += (state.targetYaw - state.yaw) * ease;
+      state.pitch += (state.targetPitch - state.pitch) * ease;
+
+      // entrance dolly: glide from the doorway into the seat
+      if (state.introActive) {
+        const k = Math.min(1, (tNow - state.introStart) / 2400);
+        const e = 1 - Math.pow(1 - k, 3); // easeOutCubic
+        camera.position.lerpVectors(CAM_INTRO, CAM_HOME, e);
+        if (k >= 1) { state.introActive = false; camera.position.copy(CAM_HOME); }
+      }
 
       // subtle head sway
       const sway = Math.sin(tNow * 0.0008) * 0.008 * state.swayAmp;
@@ -2472,13 +2637,19 @@ window.Classroom = (function () {
       minPivot.rotation.z = -(m / 60) * Math.PI * 2;
       secPivot.rotation.z = -(s / 60) * Math.PI * 2;
 
-      // animate hover glow — gentle pulse
+      // animate hover glow — quick fade-in, then a gentle pulse
       if (hoverGlow) {
-        const pulse = 0.6 + Math.sin((tNow - hoverPulseStart) * 0.006) * 0.4;
+        const age = tNow - hoverPulseStart;
+        const fadeIn = Math.min(1, age / 160);
+        const pulse = (0.6 + Math.sin(age * 0.006) * 0.4) * fadeIn;
         hoverGlow.traverse(child => {
           if (child.material) child.material.opacity = pulse;
         });
       }
+
+      // light shafts breathe very slowly — the room feels alive
+      const breathe = 1 + Math.sin(tNow * 0.00035) * 0.25;
+      rayMats.forEach(m => { m.opacity = state.rayBase * breathe; });
 
       renderer.render(scene, camera);
       state._raf = requestAnimationFrame(frame);
@@ -2491,63 +2662,159 @@ window.Classroom = (function () {
   }
 
   // ---- window scene ----
-  function drawWindowScene(ctx, W, H, mode) {
-    // modes: morning, afternoon, dusk, night
-    let skyTop, skyBot, sunColor, sunY, groundTone;
-    if (mode === 'morning') {
-      skyTop = '#ffd8a8'; skyBot = '#fff4d8'; sunColor = '#ffeeaa'; sunY = H*0.55; groundTone = '#c89668';
-    } else if (mode === 'afternoon') {
-      skyTop = '#f8c56a'; skyBot = '#fbe4a8'; sunColor = '#fff2b8'; sunY = H*0.4; groundTone = '#a87a55';
-    } else if (mode === 'dusk') {
-      skyTop = '#4a3668'; skyBot = '#e8805a'; sunColor = '#ff8a4a'; sunY = H*0.7; groundTone = '#5a3a4a';
-    } else { // night
-      skyTop = '#0d1028'; skyBot = '#1a1a3a'; sunColor = '#ffeeaa'; sunY = -100; groundTone = '#2a2035';
-    }
+  // variant 0 = the pane with the sun/moon + building on the right;
+  // variant 1 = the neighboring pane of the SAME sky (no second sun/moon).
+  function drawWindowScene(ctx, W, H, mode, variant = 0) {
+    // modes: morning, afternoon, dusk, night — a little campus view
+    const P = {
+      morning:   { skyTop: '#a8cfe8', skyBot: '#ffeccc', sun: '#fff0b8', sunY: H*0.55,
+                   grass: '#7da85c', grassDark: '#5d8a44', canopy: '#5f9446', canopyHi: '#7bae5c',
+                   trunk: '#6a4a2c', bldg: '#a8765a', bldgRoof: '#6e4a36', clouds: true, winGlow: false },
+      afternoon: { skyTop: '#7cb8e0', skyBot: '#d8eef8', sun: '#fff6c8', sunY: H*0.32,
+                   grass: '#82ad60', grassDark: '#628e48', canopy: '#5f9446', canopyHi: '#82b562',
+                   trunk: '#6a4a2c', bldg: '#b07d5e', bldgRoof: '#74503a', clouds: true, winGlow: false },
+      dusk:      { skyTop: '#4a3668', skyBot: '#f0915e', sun: '#ff8a4a', sunY: H*0.68,
+                   grass: '#46506a', grassDark: '#3a4258', canopy: '#3c3450', canopyHi: '#4c4260',
+                   trunk: '#2c2438', bldg: '#3e3450', bldgRoof: '#2e2640', clouds: false, winGlow: true },
+      night:     { skyTop: '#0d1028', skyBot: '#1c2244', sun: null, sunY: -100,
+                   grass: '#1c2230', grassDark: '#161b26', canopy: '#141a24', canopyHi: '#1c2430',
+                   trunk: '#0e1218', bldg: '#202638', bldgRoof: '#181c2c', clouds: false, winGlow: true },
+    };
+    const p = P[mode] || P.afternoon;
+
+    // sky
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, skyTop); g.addColorStop(1, skyBot);
+    g.addColorStop(0, p.skyTop); g.addColorStop(1, p.skyBot);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
     if (mode === 'night') {
-      // stars
-      for (let i = 0; i < 100; i++) {
+      // stars in both panes — but only ONE moon in the sky (variant 0)
+      for (let i = 0; i < 110; i++) {
         ctx.fillStyle = `rgba(255,255,230,${0.3 + Math.random()*0.6})`;
-        ctx.fillRect(Math.random()*W, Math.random()*H*0.7, 1.5, 1.5);
+        ctx.fillRect(Math.random()*W, Math.random()*H*0.65, 1.5, 1.5);
       }
-      // moon
-      ctx.fillStyle = '#f8f0d0';
-      ctx.beginPath(); ctx.arc(W*0.7, H*0.3, 28, 0, Math.PI*2); ctx.fill();
-    } else {
-      // sun glow
-      const rg = ctx.createRadialGradient(W*0.3, sunY, 10, W*0.3, sunY, 180);
-      rg.addColorStop(0, sunColor); rg.addColorStop(0.3, sunColor.replace(')', ',0.4)').replace('rgb','rgba'));
-      rg.addColorStop(1, 'rgba(255,200,120,0)');
+      if (variant === 0) {
+        ctx.fillStyle = '#f8f0d0';
+        ctx.beginPath(); ctx.arc(W*0.7, H*0.28, 28, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = p.skyTop;
+        ctx.beginPath(); ctx.arc(W*0.7 + 11, H*0.28 - 5, 24, 0, Math.PI*2); ctx.fill();
+      }
+    } else if (variant === 0) {
+      // sun with a soft glow — only in the first pane
+      const rg = ctx.createRadialGradient(W*0.28, p.sunY, 10, W*0.28, p.sunY, 170);
+      rg.addColorStop(0, p.sun); rg.addColorStop(0.35, 'rgba(255,235,170,0.35)');
+      rg.addColorStop(1, 'rgba(255,220,140,0)');
       ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = sunColor;
-      ctx.beginPath(); ctx.arc(W*0.3, sunY, 38, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = p.sun;
+      ctx.beginPath(); ctx.arc(W*0.28, p.sunY, 34, 0, Math.PI*2); ctx.fill();
+    } else {
+      // variant 1: just a hint of the sun's glow bleeding in from the side
+      const rg = ctx.createRadialGradient(0, p.sunY, 10, 0, p.sunY, 150);
+      rg.addColorStop(0, 'rgba(255,235,170,0.25)');
+      rg.addColorStop(1, 'rgba(255,220,140,0)');
+      ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
     }
 
-    // tree silhouettes
-    ctx.fillStyle = mode === 'night' ? '#050308' : '#2a1a0f';
-    ctx.fillRect(0, H*0.72, W, H*0.28);
-    for (let i = 0; i < 6; i++) {
-      const tx = W*0.15 + i*W*0.14 + (Math.random()-0.5)*30;
-      const tw = 40 + Math.random()*50;
-      const th = 80 + Math.random()*60;
-      ctx.beginPath();
-      ctx.ellipse(tx, H*0.72 - th*0.3, tw, th*0.6, 0, 0, Math.PI*2);
-      ctx.fill();
-      ctx.fillRect(tx - 4, H*0.72 - 20, 8, 30);
+    // drifting clouds (day modes) — different clouds per pane
+    if (p.clouds) {
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      const cloudSpots = variant === 0
+        ? [[0.16, 0.18, 1.0], [0.58, 0.12, 1.3], [0.84, 0.3, 0.8]]
+        : [[0.3, 0.22, 1.15], [0.72, 0.14, 0.9]];
+      cloudSpots.forEach(([cx, cy, s]) => {
+        const x = cx*W, y = cy*H;
+        ctx.beginPath();
+        ctx.ellipse(x, y, 44*s, 16*s, 0, 0, Math.PI*2);
+        ctx.ellipse(x + 30*s, y + 4*s, 32*s, 13*s, 0, 0, Math.PI*2);
+        ctx.ellipse(x - 32*s, y + 5*s, 28*s, 11*s, 0, 0, Math.PI*2);
+        ctx.fill();
+      });
     }
-    // building silhouette
-    ctx.fillRect(W*0.6, H*0.55, W*0.35, H*0.2);
-    // windows in building
+
+    // campus building — right edge of pane 0, continuing at the left edge of pane 1
+    const bdx = variant === 0 ? 0 : -0.62;
+    ctx.fillStyle = p.bldg;
+    ctx.fillRect(W*(0.6 + bdx), H*0.5, W*0.36, H*0.28);
+    ctx.fillStyle = p.bldgRoof;
+    ctx.fillRect(W*(0.585 + bdx), H*0.48, W*0.39, H*0.035);
+    // little clock-tower bump (pane 0 only — one tower on campus)
+    if (variant === 0) {
+      ctx.fillStyle = p.bldg;
+      ctx.fillRect(W*0.74, H*0.38, W*0.07, H*0.12);
+      ctx.fillStyle = p.bldgRoof;
+      ctx.beginPath();
+      ctx.moveTo(W*0.725, H*0.385); ctx.lineTo(W*0.775, H*0.32); ctx.lineTo(W*0.825, H*0.385);
+      ctx.closePath(); ctx.fill();
+    }
+    // building windows
     for (let i = 0; i < 5; i++) {
       for (let j = 0; j < 3; j++) {
-        ctx.fillStyle = mode === 'night'
-          ? (Math.random() > 0.4 ? 'rgba(255,220,120,0.8)' : 'rgba(60,40,30,0.4)')
-          : 'rgba(255,255,255,0.15)';
-        ctx.fillRect(W*0.62 + i*38, H*0.58 + j*30, 14, 18);
+        const wx = W*(0.625 + bdx) + i*36;
+        if (wx < -16 || wx > W) continue;
+        ctx.fillStyle = p.winGlow
+          ? (Math.random() > 0.35 ? 'rgba(255,214,110,0.9)' : 'rgba(30,26,40,0.6)')
+          : 'rgba(255,255,255,0.45)';
+        ctx.fillRect(wx, H*0.54 + j*34, 15, 20);
       }
+    }
+
+    // rolling lawn
+    ctx.fillStyle = p.grass;
+    ctx.beginPath();
+    ctx.moveTo(0, H*0.78);
+    ctx.quadraticCurveTo(W*0.3, H*0.72, W*0.55, H*0.77);
+    ctx.quadraticCurveTo(W*0.8, H*0.81, W, H*0.76);
+    ctx.lineTo(W, H); ctx.lineTo(0, H);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = p.grassDark;
+    ctx.beginPath();
+    ctx.moveTo(0, H*0.9);
+    ctx.quadraticCurveTo(W*0.5, H*0.84, W, H*0.92);
+    ctx.lineTo(W, H); ctx.lineTo(0, H);
+    ctx.closePath(); ctx.fill();
+    // winding path
+    ctx.strokeStyle = mode === 'night' ? 'rgba(90,95,115,0.5)' : 'rgba(232,220,190,0.85)';
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    if (variant === 0) {
+      ctx.moveTo(W*0.45, H);
+      ctx.quadraticCurveTo(W*0.5, H*0.85, W*0.68, H*0.78);
+    } else {
+      ctx.moveTo(W*0.6, H);
+      ctx.quadraticCurveTo(W*0.55, H*0.86, W*0.3, H*0.79);
+    }
+    ctx.stroke();
+
+    // trees — round canopies with trunks, different cluster per pane
+    const treeSpots = variant === 0
+      ? [[0.1, 0.78, 1.1], [0.34, 0.75, 0.85], [0.52, 0.78, 0.6], [0.95, 0.77, 0.95]]
+      : [[0.5, 0.77, 1.0], [0.72, 0.75, 1.2], [0.92, 0.78, 0.7], [0.18, 0.79, 0.55]];
+    treeSpots.forEach(([tx, ty, s]) => {
+      const x = tx*W, y = ty*H;
+      ctx.fillStyle = p.trunk;
+      ctx.fillRect(x - 5*s, y - 30*s, 10*s, 34*s);
+      ctx.fillStyle = p.canopy;
+      ctx.beginPath(); ctx.ellipse(x, y - 52*s, 36*s, 32*s, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x - 24*s, y - 38*s, 24*s, 20*s, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x + 24*s, y - 40*s, 24*s, 20*s, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = p.canopyHi;
+      ctx.beginPath(); ctx.ellipse(x - 10*s, y - 58*s, 18*s, 13*s, 0, 0, Math.PI*2); ctx.fill();
+    });
+
+    // birds (day) — tiny accents
+    if (mode === 'morning' || mode === 'afternoon') {
+      ctx.strokeStyle = 'rgba(50,60,70,0.6)';
+      ctx.lineWidth = 2.5;
+      const birdSpots = variant === 0
+        ? [[0.45, 0.2], [0.5, 0.24], [0.41, 0.26]]
+        : [[0.6, 0.3], [0.66, 0.33]];
+      birdSpots.forEach(([bx, by]) => {
+        const x = bx*W, y = by*H;
+        ctx.beginPath();
+        ctx.moveTo(x - 8, y); ctx.quadraticCurveTo(x - 3, y - 5, x, y);
+        ctx.quadraticCurveTo(x + 3, y - 5, x + 8, y);
+        ctx.stroke();
+      });
     }
   }
 
@@ -2555,22 +2822,33 @@ window.Classroom = (function () {
   return {
     init,
     updateWindow(state, mode) {
-      const c = state.windowTex.source.data;
-      const ctx = c.getContext('2d');
-      drawWindowScene(ctx, c.width, c.height, mode);
-      state.windowTex.needsUpdate = true;
+      (state.windowTexes || [{ tex: state.windowTex, variant: 0 }]).forEach(({ tex, variant }) => {
+        const c = tex.source.data;
+        const ctx = c.getContext('2d');
+        drawWindowScene(ctx, c.width, c.height, mode, variant);
+        tex.needsUpdate = true;
+      });
 
       // also adjust lighting
       const presets = {
-        morning:   { amb: 0xfff4dc, amb_i: 0.42, key: 0xffc890, key_i: 1.05, ray: 0.08, bg: '#2b2d1f' },
-        afternoon: { amb: 0xfff6e0, amb_i: 0.45, key: 0xffd8a0, key_i: 1.2,  ray: 0.10, bg: '#2a2d1d' },
-        dusk:      { amb: 0xe8b098, amb_i: 0.28, key: 0xff8a60, key_i: 0.9,  ray: 0.12, bg: '#231a22' },
-        night:     { amb: 0x6478a8, amb_i: 0.15, key: 0x8896b8, key_i: 0.35, ray: 0.02, bg: '#0e121e' },
+        morning:   { amb: 0xfff4dc, amb_i: 0.42, key: 0xffc890, key_i: 1.05, fill: 0xaec9e0, fill_i: 0.30,
+                     hemi_i: 0.40, pts: 0.30, ray: 0.08, dust: 0.32, bg: '#2b2d1f' },
+        afternoon: { amb: 0xfff6e0, amb_i: 0.45, key: 0xffd8a0, key_i: 1.2,  fill: 0xaec9e0, fill_i: 0.30,
+                     hemi_i: 0.40, pts: 0.25, ray: 0.10, dust: 0.32, bg: '#2a2d1d' },
+        dusk:      { amb: 0xf0c0a0, amb_i: 0.34, key: 0xff8a60, key_i: 0.85, fill: 0xc8a8d8, fill_i: 0.22,
+                     hemi_i: 0.32, pts: 0.65, ray: 0.12, dust: 0.26, bg: '#231a22' },
+        // night = evening study session: lights ON, warm and cozy, moonlight through the window
+        night:     { amb: 0xffe2b8, amb_i: 0.34, key: 0x96a8d8, key_i: 0.30, fill: 0xffd8a8, fill_i: 0.28,
+                     hemi_i: 0.30, pts: 1.05, ray: 0.03, dust: 0.14, bg: '#16120c' },
       };
       const p = presets[mode] || presets.afternoon;
       state.ambient.color.set(p.amb); state.ambient.intensity = p.amb_i;
       state.key.color.set(p.key); state.key.intensity = p.key_i;
-      state.rayMat.opacity = p.ray;
+      state.fill.color.set(p.fill); state.fill.intensity = p.fill_i;
+      state.hemi.intensity = p.hemi_i;
+      (state.pointLights || []).forEach((pl, i) => { pl.intensity = p.pts * (i < 3 ? 1 : 0.7); });
+      state.rayBase = p.ray;
+      if (state.dustMat) state.dustMat.opacity = Math.min(state.dustBase, p.dust);
       state.scene.background.set(p.bg);
       state.scene.fog.color.set(p.bg);
     },
