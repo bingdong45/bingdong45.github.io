@@ -177,13 +177,15 @@ window.Classroom = (function () {
         ctx.closePath();
         ctx.stroke();
 
-        // title (truncate if too long)
+        // title (truncate if too long, with a visible ellipsis)
         ctx.fillStyle = '#f0ebe0';
         ctx.font = '50px "Patrick Hand", cursive';
         const titleText = `${it.num || String(i+1).padStart(2, '0')}  ${it.title}`;
         const titleLines = wrapText(ctx, titleText, z.w - 40);
-        titleLines.slice(0, 2).forEach((ln, li) =>
-          ctx.fillText(ln, z.x + 22, z.y + 20 + li * 46));
+        titleLines.slice(0, 2).forEach((ln, li) => {
+          const shown = (li === 1 && titleLines.length > 2) ? ln + '…' : ln;
+          ctx.fillText(shown, z.x + 22, z.y + 20 + li * 46);
+        });
 
         // tag
         ctx.fillStyle = '#f5e090';
@@ -194,10 +196,12 @@ window.Classroom = (function () {
         ctx.fillStyle = 'rgba(240,235,224,0.88)';
         ctx.font = '34px "Patrick Hand", cursive';
         const noteLines = wrapText(ctx, it.desc || '', z.w - 40);
-        const noteTop = z.y + Math.min(165, 20 + titleLines.length * 46 + 58);
-        const maxLines = Math.floor((z.h - (noteTop - z.y) - 60) / 40);
-        noteLines.slice(0, maxLines).forEach((line, li) =>
-          ctx.fillText(line, z.x + 22, noteTop + li * 40));
+        const noteTop = z.y + Math.min(165, 20 + Math.min(titleLines.length, 2) * 46 + 58);
+        const maxLines = Math.max(1, Math.floor((z.h - (noteTop - z.y) - 60) / 40));
+        noteLines.slice(0, maxLines).forEach((line, li) => {
+          const shown = (li === maxLines - 1 && noteLines.length > maxLines) ? line + '…' : line;
+          ctx.fillText(shown, z.x + 22, noteTop + li * 40);
+        });
 
         // little underline flourish
         ctx.strokeStyle = accentColor;
@@ -300,83 +304,6 @@ window.Classroom = (function () {
     });
   }
 
-  // right side contact board
-  function contactBoardTexture(accentColor) {
-    const C = (window.CONTENT && window.CONTENT.rightboard) || {};
-    const contacts = C.contacts || [];
-    return makeCanvasTexture(1024, 1280, (ctx, W, H) => {
-      ctx.fillStyle = '#f8f4e8';
-      ctx.fillRect(0, 0, W, H);
-
-      ctx.fillStyle = '#1a1510';
-      ctx.font = '96px "Patrick Hand", cursive';
-      ctx.fillText(C.title || 'Get in touch', 60, 140);
-
-      ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.moveTo(60, 170);
-      ctx.lineTo(560, 175);
-      ctx.stroke();
-
-      // sub
-      if (C.sub) {
-        ctx.fillStyle = 'rgba(26,21,16,0.7)';
-        ctx.font = 'italic 34px "Caveat", cursive';
-        const subLines = wrapText(ctx, C.sub, W - 120);
-        subLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, 60, 220 + i * 40));
-      }
-
-      // contacts
-      ctx.font = '48px "Caveat", cursive';
-      const startY = 320;
-      contacts.slice(0, 5).forEach((c, i) => {
-        ctx.fillStyle = accentColor;
-        ctx.fillText((c.label || '').toLowerCase(), 60, startY + i * 90);
-        ctx.fillStyle = '#1a1510';
-        ctx.font = '44px "Caveat", cursive';
-        // truncate long values
-        let val = c.val || '';
-        if (ctx.measureText(val).width > W - 360) {
-          while (val.length > 10 && ctx.measureText(val + '…').width > W - 360) val = val.slice(0, -1);
-          val = val + '…';
-        }
-        ctx.fillText(val, 340, startY + i * 90);
-        ctx.font = '48px "Caveat", cursive';
-      });
-
-      // now working on
-      const divY = startY + Math.min(contacts.length, 5) * 90 + 40;
-      ctx.strokeStyle = 'rgba(26,21,16,0.3)';
-      ctx.setLineDash([8, 8]);
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(60, divY);
-      ctx.lineTo(W - 60, divY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = accentColor;
-      ctx.font = '44px "Patrick Hand", cursive';
-      ctx.fillText('currently looking for:', 60, divY + 60);
-
-      ctx.fillStyle = '#1a1510';
-      ctx.font = '36px "Caveat", cursive';
-      const nowLines = wrapText(ctx, C.now || '', W - 120);
-      const maxNow = Math.max(1, Math.floor((H - (divY + 90) - 160) / 44));
-      nowLines.slice(0, maxNow).forEach((l, i) => ctx.fillText(l, 60, divY + 110 + i * 44));
-
-      ctx.strokeStyle = accentColor;
-      ctx.setLineDash([12, 10]);
-      ctx.lineWidth = 4;
-      ctx.strokeRect(40, 60, W - 80, H - 150);
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = accentColor;
-      ctx.font = '36px "JetBrains Mono", monospace';
-      ctx.fillText('→ reach out', W - 290, H - 70);
-    });
-  }
 
   // contact ribbon card (horizontal banner with icon + text)
   function contactRibbonTexture(label, value, iconType, bgColor) {
@@ -462,16 +389,17 @@ window.Classroom = (function () {
       ctx.fillStyle = '#1a1510';
       ctx.font = '40px "Caveat", cursive';
       const body = [
-        'Featured this week:',
+        'Honors thesis:',
         '',
-        'a short illustrated essay',
-        'on "slow interfaces" —',
-        'software that deliberately',
-        'takes a beat.',
+        '"Toward Supporting CS',
+        'Education in the Era of',
+        'Artificial Intelligence"',
         '',
-        'goes up Thursday.',
+        'advisor: Prof. Bilge Mutlu',
+        'draft in progress —',
+        'defending spring 2026.',
         '',
-        '— Avery',
+        '— Mason',
       ];
       body.forEach((l, i) => ctx.fillText(l, 120, 168 + i * 48));
 
@@ -483,44 +411,6 @@ window.Classroom = (function () {
   }
 
   // notebook open-page texture
-  function notebookTexture() {
-    return makeCanvasTexture(1024, 768, (ctx, W, H) => {
-      ctx.fillStyle = '#fffdf4';
-      ctx.fillRect(0, 0, W, H);
-      // spiral
-      ctx.fillStyle = '#d4cbb5';
-      ctx.fillRect(W/2 - 4, 0, 8, H);
-      for (let y = 30; y < H - 20; y += 50) {
-        ctx.fillStyle = '#888';
-        ctx.beginPath(); ctx.arc(W/2, y, 9, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fffdf4';
-        ctx.beginPath(); ctx.arc(W/2, y, 5, 0, Math.PI * 2); ctx.fill();
-      }
-      // rule lines both pages
-      ctx.strokeStyle = 'rgba(90,130,200,0.2)';
-      for (let y = 80; y < H - 40; y += 40) {
-        ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(W/2 - 30, y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(W/2 + 30, y); ctx.lineTo(W - 40, y); ctx.stroke();
-      }
-      // handwriting
-      ctx.fillStyle = '#1a1510';
-      ctx.font = '36px "Caveat", cursive';
-      ctx.fillText('field notes.', 60, 110);
-      ctx.font = '28px "Caveat", cursive';
-      ['apr 2 — loading states, a taxonomy', 'mar 18 — on quitting the dashboard',
-       'feb 24 — the desk is the interface', 'jan 11 — prompts are a syntax...'].forEach((l, i) =>
-        ctx.fillText(l, 60, 180 + i * 40));
-
-      ctx.font = '34px "Patrick Hand", cursive';
-      ctx.fillStyle = '#c0392b';
-      ctx.fillText('click to read →', W/2 + 60, 110);
-      ctx.fillStyle = '#1a1510';
-      ctx.font = '26px "Caveat", cursive';
-      ['• longer essays go on letters.', '• shorter things stay here.', '• some are rough drafts,',
-       '  kept that way on purpose.', '', 'thanks for reading.'].forEach((l, i) =>
-        ctx.fillText(l, W/2 + 60, 180 + i * 40));
-    });
-  }
 
   // textbook cover
   function textbookTexture(accentColor) {
@@ -543,8 +433,8 @@ window.Classroom = (function () {
 
       ctx.font = 'italic 30px "Fraunces", serif';
       ctx.fillStyle = 'rgba(240,232,208,0.7)';
-      ctx.fillText('A. Okonkwo, ed.', 40, 370);
-      ctx.fillText('2017 — present', 40, 410);
+      ctx.fillText('B. Dong', 40, 370);
+      ctx.fillText('2024 — present', 40, 410);
 
       // sticky notes drawn separately as child meshes
     });
@@ -562,30 +452,28 @@ window.Classroom = (function () {
       }
 
       // title card
+      const BC = (window.CONTENT && window.CONTENT.bulletin) || {};
       ctx.fillStyle = '#f8f4e8';
       ctx.save();
       ctx.translate(100, 80);
       ctx.rotate(-0.03);
-      ctx.fillRect(0, 0, 340, 90);
+      ctx.fillRect(0, 0, 400, 90);
       ctx.restore();
       ctx.fillStyle = '#1a1510';
       ctx.font = '50px "Patrick Hand", cursive';
-      ctx.fillText('Press & things', 120, 140);
+      ctx.fillText(BC.title || 'Honors & teaching', 120, 140);
 
-      // pinned cards
-      const cards = [
-        { x: 520, y: 60, w: 360, h: 260, r: -0.04, c: '#fffdf4', t: 'Profile', s: 'The Creative\nIndependent', d: 'mar 2026' },
-        { x: 920, y: 90, w: 340, h: 240, r: 0.03, c: '#fef5db', t: 'Talk', s: 'Keynote · Config\nLondon', d: 'oct 2025' },
-        { x: 1300, y: 70, w: 200, h: 260, r: -0.02, c: '#e8e0c8', t: 'Photo', s: '[gallery opening]', d: 'sep 2025' },
-        { x: 150, y: 380, w: 300, h: 200, r: 0.02, c: '#fef5db', t: 'Award', s: 'Fast Co. IxD\nfinalist', d: 'jun 2025' },
-        { x: 500, y: 420, w: 360, h: 220, r: -0.05, c: '#fffdf4', t: 'Press', s: 'Offscreen Mag\n#27', d: 'feb 2025' },
-        { x: 930, y: 400, w: 340, h: 240, r: 0.04, c: '#f2e0d0', t: 'Talk', s: 'RISD GD\nguest lecture', d: 'nov 2024' },
-        { x: 1310, y: 420, w: 200, h: 200, r: 0.02, c: '#e8e0c8', t: 'Photo', s: '[studio desk]', d: 'aug 2024' },
-        { x: 200, y: 700, w: 380, h: 240, r: -0.02, c: '#fffdf4', t: 'Writing', s: 'WorksInProgress\nessay', d: 'jul 2024' },
-        { x: 650, y: 720, w: 320, h: 220, r: 0.03, c: '#fef5db', t: 'Interview', s: 'Off-Record\npodcast', d: 'jun 2024' },
-        { x: 1020, y: 710, w: 420, h: 240, r: -0.03, c: '#f0e8d0', t: 'Exhibition', s: 'group show,\nred hook gallery', d: 'may 2024' },
+      // pinned cards — generated from the real content
+      const slots = [
+        { x: 560,  y: 60,  w: 440, h: 270, r: -0.035, c: '#fffdf4' },
+        { x: 1060, y: 85,  w: 420, h: 260, r: 0.03,   c: '#fef5db' },
+        { x: 120,  y: 400, w: 430, h: 270, r: 0.02,   c: '#f2e0d0' },
+        { x: 620,  y: 420, w: 440, h: 270, r: -0.04,  c: '#fffdf4' },
+        { x: 1110, y: 410, w: 400, h: 270, r: 0.035,  c: '#e8f0dc' },
+        { x: 380,  y: 730, w: 470, h: 250, r: -0.02,  c: '#fef5db' },
       ];
-      cards.forEach(c => {
+      (BC.items || []).slice(0, 6).forEach((it, idx) => {
+        const c = slots[idx]; if (!c) return;
         ctx.save();
         ctx.translate(c.x + c.w / 2, c.y + c.h / 2);
         ctx.rotate(c.r);
@@ -602,14 +490,15 @@ window.Classroom = (function () {
         ctx.beginPath(); ctx.arc(0, -c.h/2 + 14, 10, 0, Math.PI*2); ctx.fill();
 
         ctx.fillStyle = accentColor;
-        ctx.font = '20px "JetBrains Mono", monospace';
-        ctx.fillText(c.t.toUpperCase(), -c.w/2 + 20, -c.h/2 + 54);
+        ctx.font = '22px "JetBrains Mono", monospace';
+        ctx.fillText((it.kind || '').toUpperCase(), -c.w/2 + 22, -c.h/2 + 54);
         ctx.fillStyle = '#1a1510';
-        ctx.font = '32px "Fraunces", serif';
-        c.s.split('\n').forEach((line, i) => ctx.fillText(line, -c.w/2 + 20, -c.h/2 + 90 + i*38));
+        ctx.font = '34px "Fraunces", serif';
+        const lines = wrapText(ctx, it.title || '', c.w - 44);
+        lines.slice(0, 4).forEach((line, i) => ctx.fillText(line, -c.w/2 + 22, -c.h/2 + 96 + i*40));
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.font = '18px "JetBrains Mono", monospace';
-        ctx.fillText(c.d, -c.w/2 + 20, c.h/2 - 24);
+        ctx.font = '20px "JetBrains Mono", monospace';
+        ctx.fillText(it.meta || '', -c.w/2 + 22, c.h/2 - 26);
         ctx.restore();
       });
     });
@@ -629,56 +518,73 @@ window.Classroom = (function () {
       });
       ctx.fillStyle = '#999';
       ctx.font = '16px "JetBrains Mono", monospace';
-      ctx.fillText('margin-notes — live demo', 140, 25);
+      ctx.fillText('course-audit — learning-objective coverage', 140, 25);
 
-      // left: "book" text
+      // left: lecture transcript being ingested
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = '13px "JetBrains Mono", monospace';
+      ctx.fillText('LECTURE 14 · TRANSCRIPT', 40, 78);
       ctx.fillStyle = '#f0e8d0';
-      ctx.font = '18px "Fraunces", serif';
-      const book = [
-        'Chapter one. The town of Verrières',
-        'must be one of the prettiest in the',
-        'Franche-Comté. Its white houses',
-        'with their red-tiled, pointed roofs',
-        'stretch along the slope of a hill...',
-        '',
-        'The Doubs flows some hundreds of',
-        'feet below its fortifications.',
+      ctx.font = '17px "Fraunces", serif';
+      const transcript = [
+        '"...so a hash collision happens when',
+        'two keys land in the same bucket.',
+        'There are two classic fixes — chaining',
+        'and open addressing. Let\'s work',
+        'through chaining first, because it\'s',
+        'the one you\'ll implement in P4..."',
       ];
-      book.forEach((l, i) => ctx.fillText(l, 40, 100 + i * 28));
+      transcript.forEach((l, i) => ctx.fillText(l, 40, 112 + i * 28));
 
-      // highlight
-      ctx.fillStyle = 'rgba(255, 220, 100, 0.25)';
-      ctx.fillRect(40, 180, 380, 26);
+      // highlight — the span the agent matched to an objective
+      ctx.fillStyle = 'rgba(255, 220, 100, 0.22)';
+      ctx.fillRect(38, 96, 420, 26);
 
-      // right gutter: model response
+      // right panel: coverage audit
       ctx.strokeStyle = 'rgba(255,255,255,0.15)';
       ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(560, 80); ctx.lineTo(560, H - 40); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(540, 60); ctx.lineTo(540, H - 40); ctx.stroke();
 
       ctx.fillStyle = accentColor;
       ctx.font = '13px "JetBrains Mono", monospace';
-      ctx.fillText('MARGIN', 580, 110);
-      ctx.fillStyle = 'rgba(240,232,208,0.85)';
-      ctx.font = 'italic 16px "Fraunces", serif';
-      const notes = [
-        'Stendhal opens not with a',
-        'person but with a geography.',
-        '',
-        'The red tiles will echo later',
-        'in the novel\'s title.',
-        '',
-        '— you highlighted this on apr 2',
+      ctx.fillText('OBJECTIVE COVERAGE', 570, 82);
+
+      const objectives = [
+        { name: 'hash tables',      pct: 0.92, col: '#5aa86a' },
+        { name: 'collision fixes',  pct: 0.78, col: '#5aa86a' },
+        { name: 'big-O analysis',   pct: 0.55, col: '#d8b24a' },
+        { name: 'amortized cost',   pct: 0.30, col: '#d8b24a' },
+        { name: 'bloom filters',    pct: 0.06, col: '#c05a4a' },
       ];
-      notes.forEach((l, i) => ctx.fillText(l, 580, 150 + i * 28));
+      objectives.forEach((o, i) => {
+        const oy = 112 + i * 62;
+        ctx.fillStyle = 'rgba(240,232,208,0.85)';
+        ctx.font = '15px "JetBrains Mono", monospace';
+        ctx.fillText(o.name, 570, oy);
+        // track
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(570, oy + 12, 380, 12);
+        // fill
+        ctx.fillStyle = o.col;
+        ctx.fillRect(570, oy + 12, 380 * o.pct, 12);
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.font = '12px "JetBrains Mono", monospace';
+        ctx.fillText(Math.round(o.pct * 100) + '%', 958, oy + 22);
+      });
+
+      // flag line
+      ctx.fillStyle = '#c05a4a';
+      ctx.font = '13px "JetBrains Mono", monospace';
+      ctx.fillText('⚠ bloom filters: not covered in any lecture', 570, 448);
 
       // blinking cursor indicator
       ctx.fillStyle = accentColor;
-      ctx.fillRect(580, 352, 2, 18);
+      ctx.fillRect(40, 300, 2, 18);
 
       // footer
       ctx.fillStyle = 'rgba(255,255,255,0.35)';
       ctx.font = '12px "JetBrains Mono", monospace';
-      ctx.fillText('→ click the laptop to open the real version', 40, H - 24);
+      ctx.fillText('→ click the laptop for more about this project', 40, H - 24);
     });
   }
 
@@ -690,7 +596,7 @@ window.Classroom = (function () {
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.32;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -711,8 +617,8 @@ window.Classroom = (function () {
     const key = new THREE.DirectionalLight(0xffd8a0, 1.2);
     key.position.set(-4, 3.5, 1.5);
     key.castShadow = true;
-    key.shadow.mapSize.width = 1024;
-    key.shadow.mapSize.height = 1024;
+    key.shadow.mapSize.width = 2048;
+    key.shadow.mapSize.height = 2048;
     key.shadow.camera.near = 0.5;
     key.shadow.camera.far = 22;
     key.shadow.camera.left = -8;
@@ -731,6 +637,13 @@ window.Classroom = (function () {
     // soft warm hemisphere
     const hemi = new THREE.HemisphereLight(0xfdecc0, 0x3a3a20, 0.4);
     scene.add(hemi);
+
+    // gallery-style wash on the front boards — keeps the room's focal point bright
+    const boardSpot = new THREE.SpotLight(0xfff2d8, 0.55, 12, 0.95, 0.9, 1.2);
+    boardSpot.position.set(0, 3.3, -1.4);
+    boardSpot.target.position.set(0, 1.8, -4);
+    scene.add(boardSpot);
+    scene.add(boardSpot.target);
 
     // Soft window "god rays" — one volume per window, additive planes
     const rayMats = [];
@@ -978,7 +891,7 @@ window.Classroom = (function () {
     const ribbonStep = 0.48;
     const ribbonColors = ['#c0392b', '#1c2e4a', '#2471a3', '#1e8449', '#6c3483'];
     const ribbonIcons  = ['email', 'github', 'linkedin', 'website', 'cv'];
-    const ribbonTilts  = [-0.065, 0.055, -0.045, 0.07, -0.04];
+    const ribbonTilts  = [-0.028, 0.024, -0.02, 0.03, -0.022];
 
     // vertical center line — spans top-edge of first card to bottom-edge of last card
     const lineH = ribbonStep * (contactEntries.length - 1) + ribbonH3;
@@ -991,7 +904,6 @@ window.Classroom = (function () {
     scene.add(lineMesh);
 
     // ribbon cards — each one individually hoverable and clickable
-    const rightBoardTex = null;
     contactEntries.forEach((c, i) => {
       const cy = ribbonTopY - i * ribbonStep;
       const tex = contactRibbonTexture(c.label, c.val, ribbonIcons[i] || 'email', ribbonColors[i % ribbonColors.length]);
@@ -1084,16 +996,34 @@ window.Classroom = (function () {
       teacherDesk.add(div);
     });
     // items on desk top
-    // grade stack
-    [0, 0.003, 0.006].forEach(dy => {
+    // paper stack, with today's assignment (the honors thesis) on top — clickable
+    [0, 0.003].forEach(dy => {
       const sheet = new THREE.Mesh(
         new THREE.BoxGeometry(0.32, 0.002, 0.24),
-        new THREE.MeshLambertMaterial({ color: dy === 0 ? 0xfdfbf0 : 0xf0ecdf })
+        new THREE.MeshLambertMaterial({ color: 0xf0ecdf })
       );
       sheet.position.set(-0.6, 0.930 + dy, 0.1);
       sheet.rotation.y = -0.06;
       teacherDesk.add(sheet);
     });
+    const paperMatTop = new THREE.MeshLambertMaterial({ map: paperTexture(opts.accentHex) });
+    const assignSheet = new THREE.Mesh(
+      new THREE.BoxGeometry(0.30, 0.004, 0.40),
+      [
+        new THREE.MeshLambertMaterial({ color: 0xfdfbf0 }),
+        new THREE.MeshLambertMaterial({ color: 0xfdfbf0 }),
+        paperMatTop,  // +y = visible top face
+        new THREE.MeshLambertMaterial({ color: 0xfdfbf0 }),
+        new THREE.MeshLambertMaterial({ color: 0xfdfbf0 }),
+        new THREE.MeshLambertMaterial({ color: 0xfdfbf0 }),
+      ]
+    );
+    assignSheet.position.set(-0.55, 0.937, 0.08);
+    assignSheet.rotation.y = 0.10;
+    assignSheet.userData.hit = 'assignment';
+    assignSheet.userData.label = "Today's assignment";
+    teacherDesk.add(assignSheet);
+    interactive.push(assignSheet);
     // open textbook
     const tdBook = new THREE.Mesh(
       new THREE.BoxGeometry(0.38, 0.025, 0.28),
@@ -1142,6 +1072,52 @@ window.Classroom = (function () {
     appleLeaf.position.set(0.075, 1.035, -0.22);
     appleLeaf.rotation.z = -0.4;
     teacherDesk.add(appleLeaf);
+
+    // ---- the class goldfish, circling its bowl on the teacher's desk ----
+    const bowlGroup = new THREE.Group();
+    bowlGroup.position.set(0.82, 0.9275, -0.2);
+    bowlGroup.scale.setScalar(1.55); // big enough to catch the eye from the seat
+    teacherDesk.add(bowlGroup);
+    const bowlGlass = new THREE.Mesh(
+      new THREE.SphereGeometry(0.085, 20, 16),
+      new THREE.MeshLambertMaterial({ color: 0xcfe8f0, transparent: true, opacity: 0.20, side: THREE.DoubleSide })
+    );
+    bowlGlass.scale.y = 0.92;
+    bowlGlass.position.y = 0.078;
+    bowlGroup.add(bowlGlass);
+    const bowlWater = new THREE.Mesh(
+      new THREE.SphereGeometry(0.078, 18, 14),
+      new THREE.MeshLambertMaterial({ color: 0x7ab8d8, transparent: true, opacity: 0.30 })
+    );
+    bowlWater.scale.y = 0.85;
+    bowlWater.position.y = 0.072;
+    bowlGroup.add(bowlWater);
+    const bowlGravel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.055, 0.062, 0.018, 14),
+      new THREE.MeshLambertMaterial({ color: 0xd8b878 })
+    );
+    bowlGravel.position.y = 0.02;
+    bowlGroup.add(bowlGravel);
+    const fishPivot = new THREE.Group();
+    fishPivot.position.y = 0.085;
+    bowlGroup.add(fishPivot);
+    const fish = new THREE.Group();
+    fish.position.x = 0.040;
+    fish.scale.setScalar(1.5);
+    fishPivot.add(fish);
+    const fishBody = new THREE.Mesh(
+      new THREE.SphereGeometry(0.016, 10, 8),
+      new THREE.MeshLambertMaterial({ color: 0xe8792e })
+    );
+    fishBody.scale.set(0.6, 0.8, 1.4);
+    fish.add(fishBody);
+    const fishTail = new THREE.Mesh(
+      new THREE.ConeGeometry(0.010, 0.018, 6),
+      new THREE.MeshLambertMaterial({ color: 0xd8641e })
+    );
+    fishTail.rotation.x = Math.PI / 2;
+    fishTail.position.z = 0.026;
+    fish.add(fishTail);
 
     // ---- trash can in front-left corner ----
     const trashGroup = new THREE.Group();
@@ -1193,7 +1169,6 @@ window.Classroom = (function () {
     const myDesk = new THREE.Group();
     scene.add(myDesk);
     myDesk.scale.set(1.35, 1.35, 1.35);
-    // keep floor contact: translate so base y ~0 after scale (items sit at y≈0.85; (0.85*0.35)=0.3 extra so push down by 0.3)
     myDesk.position.set(0, -0.1, 0.2);
 
     // ---- student desk (YOUR desk — just in front of camera, look down) ----
@@ -1212,10 +1187,10 @@ window.Classroom = (function () {
     deskLip.position.set(0, 0.84, -0.34);
     myDesk.add(deskLip);
 
-    // legs
-    [[-0.65, 0.42, -0.28], [0.65, 0.42, -0.28], [-0.65, 0.42, 0.28], [0.65, 0.42, 0.28]].forEach(p => {
-      const l = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.78, 0.05), new THREE.MeshLambertMaterial({ color: 0x4a2e14 }));
-      l.position.set(p[0], p[1], p[2]);
+    // legs — sized so their feet land exactly on the floor after the group transform
+    [[-0.65, -0.28], [0.65, -0.28], [-0.65, 0.28], [0.65, 0.28]].forEach(([lx, lz]) => {
+      const l = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.746, 0.05), new THREE.MeshLambertMaterial({ color: 0x4a2e14 }));
+      l.position.set(lx, 0.447, lz);
       myDesk.add(l);
     });
 
@@ -1357,7 +1332,7 @@ window.Classroom = (function () {
     const textbookGroup = new THREE.Group();
     textbookGroup.position.set(0.42, 0.885, 0.15);
     textbookGroup.rotation.y = -0.18;
-    textbookGroup.scale.set(0.65, 0.55, 0.65);
+    textbookGroup.scale.set(0.65, 0.62, 0.65);
     myDesk.add(textbookGroup);
 
     const textbookTex = textbookTexture(opts.accentHex);
@@ -1434,6 +1409,7 @@ window.Classroom = (function () {
     const laptopGroup = new THREE.Group();
     laptopGroup.position.set(-0.02, 0.88, -0.18);
     laptopGroup.rotation.y = 0.08;
+    laptopGroup.scale.setScalar(0.85); // keep the whiteboard visible over the lid
     myDesk.add(laptopGroup);
 
     const laptopBodyColor = 0x8a8a90;
@@ -1668,15 +1644,31 @@ window.Classroom = (function () {
 
     // (paper / today's assignment removed from the desk — lives as the whiteboard's kicker now)
 
-    // ---- chair (you can see back of it) ----
-    const chairSeat = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 0.05, 0.5),
-      new THREE.MeshStandardMaterial({ color: 0x8b6640, roughness: 0.8, metalness: 0.0 })
-    );
-    chairSeat.position.set(0, 0.52, 0.5);
+    // ---- my chair (a real chair, not a floating seat) ----
+    const myChair = new THREE.Group();
+    myChair.position.set(0, 0, 0.55);
+    scene.add(myChair);
+    const chairWoodMat = new THREE.MeshStandardMaterial({ color: 0x8b6640, roughness: 0.8, metalness: 0.0 });
+    const chairLegMat = new THREE.MeshLambertMaterial({ color: 0x4a2e14 });
+    const chairSeat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.5), chairWoodMat);
+    chairSeat.position.y = 0.52;
     chairSeat.castShadow = true;
     chairSeat.receiveShadow = true;
-    scene.add(chairSeat);
+    myChair.add(chairSeat);
+    [[-0.21, -0.21], [0.21, -0.21], [-0.21, 0.21], [0.21, 0.21]].forEach(([lx, lz]) => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.52, 0.05), chairLegMat);
+      leg.position.set(lx, 0.26, lz);
+      myChair.add(leg);
+    });
+    // backrest behind the camera — only glimpsed when looking down, but grounds the seat
+    [-0.19, 0.19].forEach(ox => {
+      const up = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.05), chairLegMat);
+      up.position.set(ox, 0.79, 0.23);
+      myChair.add(up);
+    });
+    const chairBackrest = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.4, 0.04), chairWoodMat);
+    chairBackrest.position.set(0, 0.94, 0.23);
+    myChair.add(chairBackrest);
 
     // ======================================================================
     // Classroom decorations
@@ -1791,7 +1783,7 @@ window.Classroom = (function () {
     globe.rotation.z = 0.24; // earth's tilt
     globeGroup.add(globe);
     globe.userData.hit = 'globe';
-    globe.userData.label = 'Where I\'ve worked';
+    globe.userData.label = 'Where I\'ve been';
     interactive.push(globe);
 
     // ---- Potted plant on the floor near the window ----
@@ -2146,34 +2138,9 @@ window.Classroom = (function () {
       new THREE.PlaneGeometry(4.6, 0.28),
       new THREE.MeshLambertMaterial({ map: bannerTex, transparent: true, alphaTest: 0.02 })
     );
-    banner.position.set(0, 3.3, -roomD/2 + 0.09);
+    // hang in FRONT of the whiteboard frame (frame face is at z≈-3.89) or it is hidden behind it
+    banner.position.set(0, 3.34, -roomD/2 + 0.21);
     scene.add(banner);
-
-    // ---- Coat hooks on the back wall ----
-    const hookMat = new THREE.MeshLambertMaterial({ color: 0x3a2818 });
-    for (let i = 0; i < 6; i++) {
-      const hook = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.015, 0.015, 0.12, 8),
-        hookMat
-      );
-      hook.rotation.x = Math.PI / 2;
-      hook.position.set(-2.5 + i * 1.0, 2.4, roomD/2 - 0.1);
-      scene.add(hook);
-      // ball at end
-      const hookBall = new THREE.Mesh(
-        new THREE.SphereGeometry(0.022, 8, 6),
-        hookMat
-      );
-      hookBall.position.set(-2.5 + i * 1.0, 2.4, roomD/2 - 0.18);
-      scene.add(hookBall);
-    }
-    // a jacket hung on one hook
-    const jacket = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 0.6, 0.08),
-      new THREE.MeshLambertMaterial({ color: 0x5a6b82 })
-    );
-    jacket.position.set(0.5, 2.0, roomD/2 - 0.16);
-    scene.add(jacket);
 
     // ---- windows on the left wall — two views of ONE sky: only the first
     // window contains the sun/moon, the second shows the rest of the campus ----
@@ -2242,57 +2209,6 @@ window.Classroom = (function () {
     buildWindow(0.6, 1);
     const windowTex = windowTexes[0].tex;
 
-    // ---- door on back wall (right side) ----
-    const doorGroup = new THREE.Group();
-    const doorTex = makeCanvasTexture(256, 512, (ctx, w, h) => {
-      ctx.fillStyle = '#cec3a8';
-      ctx.fillRect(0, 0, w, h);
-      // four recessed panels
-      [[16, 16, w-32, h*0.28], [16, h*0.31, w-32, h*0.2],
-       [16, h*0.54, w-32, h*0.28], [16, h*0.85, w-32, h*0.1]].forEach(([px,py,pw,ph]) => {
-        ctx.fillStyle = 'rgba(0,0,0,0.07)';
-        ctx.fillRect(px+2, py+2, pw, ph);
-        ctx.fillStyle = '#c2b799';
-        ctx.fillRect(px, py, pw, ph);
-        ctx.strokeStyle = 'rgba(120,105,78,0.7)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(px, py, pw, ph);
-      });
-      // door window
-      ctx.fillStyle = '#c0d8ea';
-      ctx.fillRect(w*0.22, 22, w*0.56, h*0.14);
-      ctx.strokeStyle = '#8a7a60';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(w*0.22, 22, w*0.56, h*0.14);
-      // window cross
-      ctx.beginPath();
-      ctx.moveTo(w*0.5, 22); ctx.lineTo(w*0.5, 22+h*0.14);
-      ctx.moveTo(w*0.22, 22+h*0.07); ctx.lineTo(w*0.22+w*0.56, 22+h*0.07);
-      ctx.stroke();
-      // handle
-      ctx.fillStyle = '#b89830';
-      ctx.beginPath(); ctx.arc(w*0.76, h*0.5, 9, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(w*0.76, h*0.5, 5, 0, Math.PI*2);
-      ctx.fillStyle = '#d4b840'; ctx.fill();
-    });
-    const doorPanel = new THREE.Mesh(
-      new THREE.BoxGeometry(0.92, 2.12, 0.05),
-      new THREE.MeshLambertMaterial({ map: doorTex })
-    );
-    doorGroup.add(doorPanel);
-    const frameMat2 = new THREE.MeshLambertMaterial({ map: woodTexture(0) });
-    // top bar
-    const dft = new THREE.Mesh(new THREE.BoxGeometry(1.06, 0.1, 0.1), frameMat2);
-    dft.position.set(0, 1.11, 0); doorGroup.add(dft);
-    // side bars
-    [-0.51, 0.51].forEach(ox => {
-      const dfs = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.24, 0.1), frameMat2);
-      dfs.position.set(ox, 0, 0); doorGroup.add(dfs);
-    });
-    doorGroup.position.set(3.0, 1.06, roomD/2 - 0.07);
-    doorGroup.rotation.y = Math.PI;
-    scene.add(doorGroup);
-
     // ---- ---- clock on front wall, visible when looking at the boards ----
     const clockGroup = new THREE.Group();
     clockGroup.position.set(3.8, 3.1, -roomD/2 + 0.05);
@@ -2344,56 +2260,6 @@ window.Classroom = (function () {
     clockFace.userData.label = 'The clock';
     interactive.push(clockFace);
     scene.add(clockGroup);
-
-    // ---- bulletin board on back wall ----
-    const bulletinFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(3.6, 2.0, 0.08),
-      new THREE.MeshLambertMaterial({ map: woodTexture(0) })
-    );
-    bulletinFrame.position.set(-2.2, 1.5, roomD/2 - 0.04);
-    bulletinFrame.rotation.y = Math.PI;
-    scene.add(bulletinFrame);
-    const bulletin = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.4, 1.85),
-      new THREE.MeshLambertMaterial({ map: bulletinTexture(opts.accentHex) })
-    );
-    bulletin.position.set(-2.2, 1.5, roomD/2 - 0.08);
-    bulletin.rotation.y = Math.PI;
-    bulletin.userData.hit = 'bulletin';
-    bulletin.userData.label = 'Press & things';
-    scene.add(bulletin);
-    interactive.push(bulletin);
-
-    // A picture frame on right side back wall
-    const artFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(1.2, 0.9, 0.06),
-      new THREE.MeshLambertMaterial({ map: woodTexture(0) })
-    );
-    artFrame.position.set(2.4, 1.7, roomD/2 - 0.03);
-    artFrame.rotation.y = Math.PI;
-    scene.add(artFrame);
-    const art = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.05, 0.78),
-      new THREE.MeshLambertMaterial({
-        map: makeCanvasTexture(512, 384, (ctx, w, h) => {
-          // abstract warm landscape
-          const g = ctx.createLinearGradient(0, 0, 0, h);
-          g.addColorStop(0, '#f8c77a'); g.addColorStop(0.6, '#e8906a'); g.addColorStop(1, '#8b4a3a');
-          ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-          ctx.fillStyle = '#3a2418';
-          ctx.beginPath();
-          ctx.moveTo(0, h*0.7);
-          ctx.lineTo(w*0.3, h*0.5); ctx.lineTo(w*0.55, h*0.65);
-          ctx.lineTo(w*0.8, h*0.45); ctx.lineTo(w, h*0.6); ctx.lineTo(w, h); ctx.lineTo(0, h);
-          ctx.closePath(); ctx.fill();
-          ctx.fillStyle = '#fff6d8';
-          ctx.beginPath(); ctx.arc(w*0.72, h*0.3, 30, 0, Math.PI*2); ctx.fill();
-        })
-      })
-    );
-    art.position.set(2.4, 1.7, roomD/2 - 0.07);
-    art.rotation.y = Math.PI;
-    scene.add(art);
 
     // ---- ceiling fluorescent fixtures — symmetric 2×3 grid, warm panels in metal trims ----
     const fixtureTrimMat = new THREE.MeshLambertMaterial({ color: 0xc9c4b2 });
@@ -2491,6 +2357,77 @@ window.Classroom = (function () {
     paperPlane.rotation.y = 2.4;
     scene.add(paperPlane);
 
+    // every so often the plane takes off, glides across the room, and misses
+    // the trash can — landing next to the other failed shots
+    const planeCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(2.25, 0.85, -0.05),
+      new THREE.Vector3(1.4, 1.6, -0.9),
+      new THREE.Vector3(-0.3, 2.1, -1.6),
+      new THREE.Vector3(-2.0, 1.8, -2.3),
+      new THREE.Vector3(-3.3, 1.1, -2.9),
+      new THREE.Vector3(-3.75, 0.06, -3.15),
+    ]);
+    const planeHome = { pos: paperPlane.position.clone(), rotY: paperPlane.rotation.y };
+    const planeFlight = { active: false, start: 0, next: 0, landed: false, landedAt: 0 };
+    const _planeLook = new THREE.Vector3();
+
+    // ---- solar-system mobile, spinning slowly over the desks ----
+    const mobileGroup = new THREE.Group();
+    mobileGroup.position.set(3.2, roomH, 0.4);
+    scene.add(mobileGroup);
+    const mobileCordMat = new THREE.MeshLambertMaterial({ color: 0xd0c4a8 });
+    const mString = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.42, 5), mobileCordMat);
+    mString.position.y = -0.21;
+    mobileGroup.add(mString);
+    const mSpin = new THREE.Group();
+    mSpin.position.y = -0.42;
+    mobileGroup.add(mSpin);
+    const mHoop = new THREE.Mesh(
+      new THREE.TorusGeometry(0.34, 0.008, 6, 28),
+      new THREE.MeshLambertMaterial({ color: 0x8a6a3a })
+    );
+    mHoop.rotation.x = Math.PI / 2;
+    mSpin.add(mHoop);
+    // the sun hangs at the center
+    const mSunString = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.1, 4), mobileCordMat);
+    mSunString.position.y = -0.05;
+    mSpin.add(mSunString);
+    const mSun = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 12, 10),
+      new THREE.MeshBasicMaterial({ color: 0xf0c040 })
+    );
+    mSun.position.y = -0.13;
+    mSpin.add(mSun);
+    const mPlanets = [
+      { ang: 0.0, size: 0.016, color: 0x9a8a7a, drop: 0.10 },
+      { ang: 1.05, size: 0.024, color: 0xd8a860, drop: 0.22 },
+      { ang: 2.09, size: 0.026, color: 0x4a78b8, drop: 0.15 },
+      { ang: 3.14, size: 0.020, color: 0xc05a3a, drop: 0.27 },
+      { ang: 4.19, size: 0.042, color: 0xc89858, drop: 0.12 },
+      { ang: 5.24, size: 0.036, color: 0xd8c088, drop: 0.24, ring: true },
+    ];
+    mPlanets.forEach(pl => {
+      const px = Math.cos(pl.ang) * 0.34, pz = Math.sin(pl.ang) * 0.34;
+      const str = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, pl.drop, 4), mobileCordMat);
+      str.position.set(px, -pl.drop / 2, pz);
+      mSpin.add(str);
+      const ball = new THREE.Mesh(
+        new THREE.SphereGeometry(pl.size, 10, 8),
+        new THREE.MeshLambertMaterial({ color: pl.color })
+      );
+      ball.position.set(px, -pl.drop - pl.size * 0.6, pz);
+      mSpin.add(ball);
+      if (pl.ring) {
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(pl.size * 1.6, 0.004, 4, 18),
+          new THREE.MeshLambertMaterial({ color: 0xb8a070 })
+        );
+        ring.rotation.x = Math.PI / 2 - 0.3;
+        ring.position.copy(ball.position);
+        mSpin.add(ring);
+      }
+    });
+
     // ---- dust motes (cheap sprites) ----
     const dustGroup = new THREE.Group();
     const dustGeo = new THREE.BufferGeometry();
@@ -2563,11 +2500,11 @@ window.Classroom = (function () {
       dust: (opts.dust !== 'off'),
       clockHands: { hour: hourPivot, min: minPivot, sec: secPivot },
       windowTex, windowTexes, windowMat: windowGlass.material,
-      wbTex, leftBoardTex, bulletinMat: bulletin.material,
+      wbTex, leftBoardTex,
       laptopScreenMat: laptopScreen.material,
       paperMat: null,
       textbookMats: tbCover.material,
-      rayMat, rayMats, ambient, key, fill, hemi, pointLights, dustMat, scene,
+      rayMat, rayMats, ambient, key, fill, hemi, boardSpot, pointLights, dustMat, scene,
       rayBase: 0.08, dustBase: 0.32,
       interactive,
       setHover,
@@ -2575,11 +2512,17 @@ window.Classroom = (function () {
       introActive: false, introStart: 0,
     };
 
-    // gentle dolly-in when the visitor enters the room
+    // entrance: walk in through the classroom door, cross the room, take your seat
     const CAM_HOME = new THREE.Vector3(0, 1.65, 0.8);
-    const CAM_INTRO = new THREE.Vector3(0, 1.84, 1.9);
+    const CAM_PATH = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(2.9, 1.74, 3.3),   // just inside the door, standing
+      new THREE.Vector3(2.15, 1.72, 2.55), // walking past the back desks
+      new THREE.Vector3(1.05, 1.70, 1.75),
+      new THREE.Vector3(0.3, 1.67, 1.2),   // slowing beside your desk
+      CAM_HOME.clone(),                    // seated
+    ]);
     state.playIntro = function () {
-      camera.position.copy(CAM_INTRO);
+      camera.position.copy(CAM_PATH.getPoint(0));
       state.introActive = true;
       state.introStart = performance.now();
     };
@@ -2601,19 +2544,28 @@ window.Classroom = (function () {
       state.yaw += (state.targetYaw - state.yaw) * ease;
       state.pitch += (state.targetPitch - state.pitch) * ease;
 
-      // entrance dolly: glide from the doorway into the seat
-      if (state.introActive) {
-        const k = Math.min(1, (tNow - state.introStart) / 2400);
-        const e = 1 - Math.pow(1 - k, 3); // easeOutCubic
-        camera.position.lerpVectors(CAM_INTRO, CAM_HOME, e);
-        if (k >= 1) { state.introActive = false; camera.position.copy(CAM_HOME); }
-      }
-
       // subtle head sway
       const sway = Math.sin(tNow * 0.0008) * 0.008 * state.swayAmp;
       const swayX = Math.cos(tNow * 0.0011) * 0.006 * state.swayAmp;
       camera.rotation.y = state.yaw + sway;
       camera.rotation.x = state.pitch + swayX;
+
+      // entrance walk: through the door, across the room, into the seat
+      if (state.introActive) {
+        const k = Math.min(1, (tNow - state.introStart) / 5600);
+        const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; // easeInOutQuad
+        const walkPos = CAM_PATH.getPoint(e);
+        // footstep bob that settles as you sit down
+        const bob = Math.sin((tNow - state.introStart) * 0.008) * 0.014 * (1 - e);
+        camera.position.set(walkPos.x, walkPos.y + bob, walkPos.z);
+        // face the direction you're walking, easing into the seated view of the boards
+        const walkTan = CAM_PATH.getTangent(Math.min(0.98, e));
+        const walkYaw = Math.atan2(-walkTan.x, -walkTan.z);
+        const settle = e * e * e;
+        camera.rotation.y = walkYaw * (1 - settle) + (state.yaw + sway) * settle;
+        camera.rotation.x = (state.pitch + swayX) * settle;
+        if (k >= 1) { state.introActive = false; camera.position.copy(CAM_HOME); }
+      }
 
       // dust motion
       if (state.dust) {
@@ -2627,6 +2579,48 @@ window.Classroom = (function () {
         dust.geometry.attributes.position.needsUpdate = true;
       }
       dust.visible = state.dust;
+
+      // the globe turns, slowly
+      globe.rotation.y += dt * 0.12;
+
+      // the goldfish does its laps
+      fishPivot.rotation.y = tNow * 0.0007 + Math.sin(tNow * 0.0002) * 0.6;
+      fish.position.y = Math.sin(tNow * 0.0012) * 0.008;
+
+      // the mobile drifts round
+      mSpin.rotation.y = tNow * 0.00012;
+      mobileGroup.rotation.z = Math.sin(tNow * 0.0004) * 0.015;
+
+      // paper-airplane sortie: launch, glide, miss the trash can, respawn on the desk
+      if (!planeFlight.active) {
+        if (!planeFlight.next) planeFlight.next = tNow + 18000;
+        if (planeFlight.landed && tNow - planeFlight.landedAt > 6000) {
+          planeFlight.landed = false;
+          paperPlane.position.copy(planeHome.pos);
+          paperPlane.rotation.set(0, planeHome.rotY, 0);
+        }
+        if (!planeFlight.landed && tNow > planeFlight.next) {
+          planeFlight.active = true;
+          planeFlight.start = tNow;
+        }
+      } else {
+        const k = (tNow - planeFlight.start) / 6500;
+        if (k >= 1) {
+          planeFlight.active = false;
+          planeFlight.landed = true;
+          planeFlight.landedAt = tNow;
+          planeFlight.next = tNow + 26000 + Math.random() * 20000;
+          paperPlane.position.copy(planeCurve.getPoint(1));
+          paperPlane.rotation.set(0.1, 1.2, 0.45); // crumpled askew beside the can
+        } else {
+          const ke = 1 - Math.pow(1 - k, 1.6); // launched fast, then gliding
+          paperPlane.position.copy(planeCurve.getPoint(ke));
+          _planeLook.copy(planeCurve.getPoint(Math.min(1, ke + 0.03)));
+          paperPlane.lookAt(_planeLook);
+          paperPlane.rotateY(Math.PI); // nose (local -z) into the direction of travel
+          paperPlane.rotateZ(Math.sin(k * Math.PI * 3) * 0.25); // gentle banking
+        }
+      }
 
       // clock hands sync to real time
       const now = new Date();
@@ -2832,20 +2826,21 @@ window.Classroom = (function () {
       // also adjust lighting
       const presets = {
         morning:   { amb: 0xfff4dc, amb_i: 0.42, key: 0xffc890, key_i: 1.05, fill: 0xaec9e0, fill_i: 0.30,
-                     hemi_i: 0.40, pts: 0.30, ray: 0.08, dust: 0.32, bg: '#2b2d1f' },
+                     hemi_i: 0.40, pts: 0.30, spot: 0.45, ray: 0.08, dust: 0.32, bg: '#2b2d1f' },
         afternoon: { amb: 0xfff6e0, amb_i: 0.45, key: 0xffd8a0, key_i: 1.2,  fill: 0xaec9e0, fill_i: 0.30,
-                     hemi_i: 0.40, pts: 0.25, ray: 0.10, dust: 0.32, bg: '#2a2d1d' },
+                     hemi_i: 0.40, pts: 0.25, spot: 0.50, ray: 0.10, dust: 0.32, bg: '#2a2d1d' },
         dusk:      { amb: 0xf0c0a0, amb_i: 0.34, key: 0xff8a60, key_i: 0.85, fill: 0xc8a8d8, fill_i: 0.22,
-                     hemi_i: 0.32, pts: 0.65, ray: 0.12, dust: 0.26, bg: '#231a22' },
+                     hemi_i: 0.32, pts: 0.65, spot: 0.70, ray: 0.12, dust: 0.26, bg: '#231a22' },
         // night = evening study session: lights ON, warm and cozy, moonlight through the window
         night:     { amb: 0xffe2b8, amb_i: 0.34, key: 0x96a8d8, key_i: 0.30, fill: 0xffd8a8, fill_i: 0.28,
-                     hemi_i: 0.30, pts: 1.05, ray: 0.03, dust: 0.14, bg: '#16120c' },
+                     hemi_i: 0.30, pts: 1.05, spot: 0.95, ray: 0.03, dust: 0.14, bg: '#16120c' },
       };
       const p = presets[mode] || presets.afternoon;
       state.ambient.color.set(p.amb); state.ambient.intensity = p.amb_i;
       state.key.color.set(p.key); state.key.intensity = p.key_i;
       state.fill.color.set(p.fill); state.fill.intensity = p.fill_i;
       state.hemi.intensity = p.hemi_i;
+      if (state.boardSpot) state.boardSpot.intensity = p.spot;
       (state.pointLights || []).forEach((pl, i) => { pl.intensity = p.pts * (i < 3 ? 1 : 0.7); });
       state.rayBase = p.ray;
       if (state.dustMat) state.dustMat.opacity = Math.min(state.dustBase, p.dust);
@@ -2857,9 +2852,6 @@ window.Classroom = (function () {
       // rebuild textures that reference the accent
       const newWB = whiteboardTexture(accentHex);
       state.wbTex.image = newWB.image; state.wbTex.needsUpdate = true;
-      // simpler: just regen and assign
-      const wb = state.interactive.find(o => o.userData.hit === 'whiteboard');
-      if (wb) wb.material.map = whiteboardTexture(accentHex);
       const lb = state.interactive.find(o => o.userData.hit === 'leftboard');
       if (lb) lb.material.map = nameBoardTexture(accentHex);
       // right contact display is baked cards — no accent-driven texture to update
@@ -2868,7 +2860,11 @@ window.Classroom = (function () {
       const lp = state.interactive.find(o => o.userData.hit === 'laptop');
       if (lp) lp.material.map = laptopScreenTexture(accentHex);
       const pp = state.interactive.find(o => o.userData.hit === 'assignment');
-      if (pp) pp.material.map = paperTexture(accentHex);
+      if (pp) {
+        const m = Array.isArray(pp.material) ? pp.material[2] : pp.material;
+        m.map = paperTexture(accentHex);
+        m.needsUpdate = true;
+      }
     },
   };
 })();

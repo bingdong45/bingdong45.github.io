@@ -49,15 +49,15 @@
   }
 
   // ---- intro countdown ----
-  const INTRO_SECS = 3;
+  const INTRO_SECS = 12; // long enough to read both doors before class starts
   let sceneBuilt = false;
   let countdownDone = false;
   let introInterval = null;
 
-  const introBarFill = document.getElementById('introBarFill');
+  const introLine = document.getElementById('introLine');
+  const introPencil = document.getElementById('introPencil');
   const introTimer = document.getElementById('introTimer');
   const enterBtn = document.getElementById('enterBtn');
-  const textCvBtn = document.getElementById('textCvBtn');
 
   let entered = false;
   function dismissIntro() {
@@ -77,9 +77,14 @@
     introInterval = setInterval(() => {
       const elapsed = (Date.now() - t0) / 1000;
       const pct = Math.min(elapsed / INTRO_SECS, 1);
-      if (introBarFill) introBarFill.style.width = (pct * 100) + '%';
+      // the pencil writes the chalk line as time passes
+      if (introLine) introLine.style.strokeDashoffset = String(100 - pct * 100);
+      if (introPencil) {
+        const x = pct * 344;
+        introPencil.setAttribute('transform', `translate(${x.toFixed(1)} ${(Math.sin(x * 0.22) * 1.4).toFixed(2)})`);
+      }
       const rem = Math.max(0, Math.ceil(INTRO_SECS - elapsed));
-      if (introTimer) introTimer.textContent = rem > 0 ? `Entering classroom in ${rem}s…` : 'Entering classroom…';
+      if (introTimer) introTimer.textContent = rem > 0 ? `Class begins in ${rem}s…` : 'Taking your seat…';
       if (elapsed >= INTRO_SECS) {
         clearInterval(introInterval); introInterval = null;
         countdownDone = true;
@@ -90,7 +95,6 @@
   startCountdown();
 
   if (enterBtn) enterBtn.addEventListener('click', () => { dismissIntro(); });
-  if (textCvBtn) textCvBtn.addEventListener('click', () => { dismissIntro(); enterFallback(); });
 
   // ---- init three ----
   let three;
@@ -109,6 +113,10 @@
 
   // Reduced motion
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Touch devices get touch instructions
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  if (isTouch && hud) hud.textContent = 'Drag to look around · tap anything that glows';
 
   initScene();
 
@@ -417,6 +425,10 @@
         <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:500">${p.title}</div>
         <p style="margin-top:6px;font-size:15px">${p.desc} <a href="#">${p.link}</a></p>
       </div>`).join('');
+    const fbThesis = document.getElementById('fb-thesis');
+    if (fbThesis && C.assignment) {
+      fbThesis.innerHTML = `<p><em>${C.assignment.sub}</em></p>` + C.assignment.body.map(p => `<p>${p}</p>`).join('');
+    }
     document.getElementById('fb-writing').innerHTML = C.notebook.entries.map(e => `
       <p><strong style="font-family:'Fraunces',serif">${e.title}</strong> — ${e.excerpt} <em style="color:rgba(0,0,0,0.5)">(${e.date})</em></p>
     `).join('');
@@ -436,6 +448,13 @@
   }
   document.getElementById('skipBtn').addEventListener('click', (e) => {
     e.preventDefault();
+    enterFallback();
+  });
+  // "Plain-text CV" straight from the intro card — skip the room entirely
+  const plainBtn = document.getElementById('plainBtn');
+  if (plainBtn) plainBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    dismissIntro();
     enterFallback();
   });
 
@@ -539,6 +558,6 @@
     three.swayAmp = 0;
   }
 
-  // Fallback: hide loader after max wait (covers errors)
-  setTimeout(() => { if (!loader.classList.contains('hidden')) dismissIntro(); }, 8000);
+  // Fallback: hide loader after max wait (covers errors). Must stay clear of INTRO_SECS.
+  setTimeout(() => { if (!loader.classList.contains('hidden')) dismissIntro(); }, (INTRO_SECS + 4) * 1000);
 })();

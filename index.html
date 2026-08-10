@@ -11,7 +11,8 @@
 </script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-<title>The Classroom — A CV</title>
+<title>Bingyixuan (Mason) Dong — CV · The Classroom</title>
+<meta name="description" content="Interactive CV of Bingyixuan (Mason) Dong — CS & Data Science at UW–Madison, researching AI for education. Explore the classroom, or read the plain-text version." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@400;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -309,95 +310,150 @@
   #loader {
     position: fixed; inset: 0; z-index: 100;
     background: #1a1510;
-    display: grid; place-items: center;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 22px; padding: 28px 16px;
+    overflow-y: auto;
     color: var(--cream);
     transition: opacity 0.6s;
   }
   #loader.hidden { opacity: 0; pointer-events: none; }
 
-  .intro-card {
-    width: min(480px, 90vw);
-    background: #232015;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 44px 44px 38px;
-    box-shadow: 0 40px 80px rgba(0,0,0,0.6);
-    display: flex; flex-direction: column; gap: 0;
-  }
-
-  .intro-kicker {
+  /* the big header: whose CV this is, before anything else */
+  .intro-head { text-align: center; opacity: 0; animation: chalkIn 0.5s ease-out 0.1s forwards; }
+  .intro-head-kicker {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase;
-    color: rgba(255,255,255,0.35);
-    margin-bottom: 14px;
+    font-size: 16px; letter-spacing: 0.3em; text-transform: uppercase;
+    color: #f5e090;
+    margin-bottom: 12px;
+    white-space: nowrap;
   }
-
-  .intro-title {
-    font-family: 'Fraunces', serif;
-    font-size: 42px; font-weight: 500; letter-spacing: -0.02em;
-    line-height: 1; color: var(--cream);
-    margin-bottom: 6px;
+  .intro-head-kicker::before, .intro-head-kicker::after {
+    content: ''; height: 1px; width: clamp(28px, 7vw, 90px);
+    background: rgba(245,224,144,0.45);
   }
-
-  .intro-name {
+  .intro-head-name {
+    font-family: 'Fraunces', serif; font-weight: 500;
+    font-size: clamp(38px, 6.4vw, 62px);
+    letter-spacing: -0.01em; line-height: 1.05;
+    color: var(--cream);
+  }
+  .intro-head-role {
     font-family: 'Patrick Hand', cursive;
-    font-size: 17px; color: rgba(255,255,255,0.5);
-    margin-bottom: 28px;
+    font-size: 18px; color: rgba(239,236,209,0.6);
+    margin-top: 10px;
   }
+  @media (max-width: 560px) {
+    .intro-head-kicker { font-size: 12px; letter-spacing: 0.2em; }
+  }
+
+  /* The intro card is itself a little chalkboard: wood frame, chalk-drawn contents. */
+  .intro-card {
+    width: min(520px, 92vw);
+    background: #24421e;
+    background-image: radial-gradient(ellipse at 28% 18%, rgba(255,255,255,0.06), transparent 55%);
+    border: 10px solid #5c3a1c;
+    outline: 2px solid #3a2513;
+    border-radius: 8px;
+    padding: 30px 40px 30px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.65), inset 0 0 70px rgba(0,0,0,0.35);
+    position: relative;
+  }
+  .intro-card::before {
+    content: ''; position: absolute; inset: 9px;
+    border: 2px dashed rgba(240,235,224,0.16);
+    border-radius: 4px; pointer-events: none;
+  }
+
+  /* self-drawing chalk sketch */
+  .intro-sketch { display: block; width: 100%; height: auto; margin-bottom: 4px; }
+  .intro-sketch path, .intro-sketch circle {
+    fill: none; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 1; stroke-dashoffset: 1;
+    animation: sketchDraw 0.7s ease-out forwards;
+  }
+  @keyframes sketchDraw { to { stroke-dashoffset: 0; } }
+
+  @keyframes chalkIn { to { opacity: 1; transform: translateY(0) rotate(0); } }
+
+  /* the chooser: two clearly-labeled doors into the CV */
+  .intro-q {
+    font-family: 'Caveat', cursive;
+    font-size: 21px; color: rgba(245,224,144,0.75);
+    margin: 2px 0 10px;
+  }
+  .intro-doors { display: flex; flex-direction: column; gap: 10px; }
+  .door {
+    display: block; width: 100%; text-align: left;
+    padding: 12px 16px;
+    border-radius: 10px; border: 1.5px dashed rgba(240,235,224,0.32);
+    background: transparent; cursor: pointer; text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .door:hover {
+    background: rgba(240,235,224,0.07);
+    border-color: rgba(245,224,144,0.6);
+    transform: translateY(-1px);
+  }
+  .door-title {
+    display: block;
+    font-family: 'Patrick Hand', cursive; font-size: 18px;
+    color: rgba(240,235,224,0.92);
+  }
+  .door-desc {
+    display: block;
+    font-family: 'Caveat', cursive; font-size: 16px; line-height: 1.35;
+    color: rgba(240,235,224,0.5); margin-top: 2px;
+  }
+  .door.primary { background: #f0ebe0; border: 1.5px solid #f0ebe0; }
+  .door.primary .door-title { color: var(--ink); font-weight: 600; }
+  .door.primary .door-desc { color: rgba(26,21,16,0.62); }
+  .door.primary:hover { background: #fff; }
+
+  .intro-tertiary {
+    display: flex; justify-content: center; gap: 22px;
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+  .intro-tertiary a { color: rgba(245,224,144,0.7); text-decoration: none; }
+  .intro-tertiary a:hover { color: #f5e090; text-decoration: underline; }
 
   .intro-disclaimer {
     font-family: 'Patrick Hand', cursive;
-    font-size: 14px; line-height: 1.6;
-    color: rgba(255,255,255,0.42);
-    background: rgba(255,255,255,0.04);
-    border-left: 2px solid rgba(255,255,255,0.12);
-    padding: 12px 14px;
+    font-size: 13px; line-height: 1.5;
+    color: rgba(240,235,224,0.45);
+    background: rgba(0,0,0,0.14);
+    border-left: 2px dashed rgba(245,224,144,0.35);
+    padding: 8px 12px;
     border-radius: 0 6px 6px 0;
-    margin-bottom: 28px;
+    margin-top: 14px;
   }
-  .intro-disclaimer strong { color: rgba(255,255,255,0.6); }
+  .intro-disclaimer strong { color: rgba(245,224,144,0.7); }
 
-  .intro-progress {
-    margin-bottom: 24px;
+  /* pencil progress: a pencil traces a chalk line as the countdown runs */
+  .intro-progress { margin-bottom: 18px; }
+  .intro-track { display: block; width: 100%; height: 40px; overflow: visible; }
+  .intro-track .guide {
+    fill: none; stroke: rgba(240,235,224,0.14);
+    stroke-width: 2; stroke-dasharray: 5 6; stroke-linecap: round;
   }
-  .intro-bar {
-    height: 3px; background: rgba(255,255,255,0.1);
-    border-radius: 2px; overflow: hidden; margin-bottom: 8px;
+  #introLine {
+    fill: none; stroke: #f5e090; stroke-width: 2.5; stroke-linecap: round;
+    stroke-dasharray: 100; stroke-dashoffset: 100;
+    transition: stroke-dashoffset 0.1s linear;
   }
-  .intro-bar-fill {
-    height: 100%; width: 0%;
-    background: var(--marker-soft);
-    border-radius: 2px;
-    transition: width 0.1s linear;
-  }
+  #introPencil { transition: transform 0.1s linear; }
   .intro-timer {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px; letter-spacing: 0.1em;
-    color: rgba(255,255,255,0.3);
+    color: rgba(240,235,224,0.35);
   }
-
-  .intro-options {
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .intro-btn {
-    display: block; text-align: center; width: 100%;
-    padding: 11px 18px;
-    font-family: 'Patrick Hand', cursive; font-size: 16px;
-    border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
-    cursor: pointer; text-decoration: none;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-    background: transparent; color: rgba(255,255,255,0.55);
-  }
-  .intro-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.22); }
-  .intro-btn.primary {
-    background: var(--cream); color: var(--ink);
-    border-color: var(--cream); font-weight: 600;
-  }
-  .intro-btn.primary:hover { background: #fff; }
 
   @media (max-width: 520px) {
-    .intro-card { padding: 32px 28px 28px; }
-    .intro-title { font-size: 34px; }
+    .intro-card { padding: 22px 20px 20px; }
+    .intro-sketch { display: none; } /* small screens: get straight to the choice */
   }
 
   /* Fallback */
@@ -411,6 +467,7 @@
   #fallback h2::before { content: ''; width: 24px; height: 1px; background: var(--marker); }
   #fallback p { line-height: 1.7; margin-bottom: 14px; }
   #fallback a { color: var(--marker); text-underline-offset: 3px; }
+  #fallback .fb-oldsite { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.04em; margin-top: -34px; margin-bottom: 0; }
   #fallback .back { position: fixed; top: 18px; right: 18px; }
 
   @media (max-width: 640px) {
@@ -419,6 +476,11 @@
     .cgrid, .bgrid { grid-template-columns: 1fr; }
     .hint { font-size: 16px; }
     #tweaks { width: calc(100vw - 36px); bottom: 70px; }
+  }
+  /* phones: drop the decorative clock chip so the CV chips never collide */
+  @media (max-width: 560px) {
+    .hud.tl { display: none; }
+    .hud.tr { left: 18px; right: 18px; justify-content: space-between; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -429,21 +491,68 @@
 <body>
 
 <div id="loader">
+  <header class="intro-head">
+    <div class="intro-head-kicker">The Curriculum Vitae of</div>
+    <h1 class="intro-head-name">Bingyixuan (Mason) Dong</h1>
+    <p class="intro-head-role">CS &amp; Data Science, UW–Madison · researching AI for education</p>
+  </header>
   <div class="intro-card">
-    <div class="intro-kicker">· a cv as a place ·</div>
-    <h1 class="intro-title">The Classroom</h1>
-    <p class="intro-name">Bingyixuan (Mason) Dong</p>
+    <!-- a hand that draws the classroom before you enter it -->
+    <svg class="intro-sketch" viewBox="0 0 440 132" aria-hidden="true">
+      <!-- chalkboard -->
+      <path pathLength="1" stroke="#e8e2cf" stroke-width="2.5" style="animation-delay:0.10s" d="M18 16 Q140 11 266 15 Q271 58 266 100 Q140 105 20 101 Q15 58 18 16 Z"/>
+      <path pathLength="1" stroke="#e8e2cf" stroke-width="2" style="animation-delay:0.50s" d="M34 108 L250 108"/>
+      <!-- chalk scribbles -->
+      <path pathLength="1" stroke="#f5e090" stroke-width="2" style="animation-delay:0.62s" d="M40 38 Q60 33 80 38 T120 38 T160 38"/>
+      <path pathLength="1" stroke="#e8e2cf" stroke-width="2" style="animation-delay:0.82s" d="M40 58 Q70 53 100 58 T160 58"/>
+      <path pathLength="1" stroke="#e8e2cf" stroke-width="2" style="animation-delay:1.00s" d="M40 78 Q60 73 80 78 T120 78"/>
+      <!-- a little graph -->
+      <path pathLength="1" stroke="#f5e090" stroke-width="2" style="animation-delay:1.14s" d="M188 88 L188 34 M188 88 L248 88"/>
+      <path pathLength="1" stroke="#f5e090" stroke-width="2" style="animation-delay:1.32s" d="M194 80 Q212 76 224 60 T246 40"/>
+      <!-- desk -->
+      <path pathLength="1" stroke="#e8e2cf" stroke-width="2.5" style="animation-delay:1.44s" d="M296 84 L432 84 M304 84 L300 126 M424 84 L428 126"/>
+      <!-- apple on the desk -->
+      <path pathLength="1" stroke="#f5e090" stroke-width="2" style="animation-delay:1.62s" d="M352 72 Q344 62 350 56 Q356 52 360 58 Q364 52 370 56 Q376 62 368 72 Q360 79 352 72 Z M360 54 Q361 48 366 46"/>
+      <!-- clock -->
+      <circle pathLength="1" cx="398" cy="28" r="15" stroke="#e8e2cf" stroke-width="2" style="animation-delay:1.74s"/>
+      <path pathLength="1" stroke="#e8e2cf" stroke-width="2" style="animation-delay:1.90s" d="M398 28 L398 18 M398 28 L406 32"/>
+      <!-- pennant -->
+      <path pathLength="1" stroke="#f5e090" stroke-width="2" style="animation-delay:2.00s" d="M290 14 L330 14 L310 44 Z"/>
+    </svg>
+    <p class="intro-q">Two ways to read this CV — pick a door:</p>
+    <div class="intro-doors">
+      <button class="door primary" id="enterBtn">
+        <span class="door-title">Enter the Classroom →</span>
+        <span class="door-desc">The interactive version — a 3D classroom where my research, teaching, and projects are the objects in the room. Starts on its own in a few seconds.</span>
+      </button>
+      <a class="door" href="old/" target="_blank" rel="noopener">
+        <span class="door-title">Professional CV site ↗</span>
+        <span class="door-desc">The classic version — a standard scrolling page for a quick, focused read.</span>
+      </a>
+    </div>
+    <div class="intro-progress" style="margin-top:14px">
+      <svg class="intro-track" viewBox="0 0 360 40" aria-hidden="true">
+        <path class="guide" d="M8 30 Q60 27 120 30 T240 29 T352 30"/>
+        <path id="introLine" pathLength="100" d="M8 30 Q60 27 120 30 T240 29 T352 30"/>
+        <g id="introPencil">
+          <g transform="translate(8 30) rotate(-40)">
+            <path d="M0 0 L11 -4.5 L11 4.5 Z" fill="#f0d8a0"/>
+            <path d="M0 0 L4.5 -1.9 L4.5 1.9 Z" fill="#2a2a2a"/>
+            <rect x="11" y="-4.5" width="33" height="9" rx="1" fill="#f5c542"/>
+            <path d="M11 -1.5 h33 M11 1.5 h33" stroke="rgba(0,0,0,0.14)" stroke-width="1"/>
+            <rect x="44" y="-4.5" width="5" height="9" fill="#b8c4cc"/>
+            <rect x="49" y="-4.5" width="6.5" height="9" rx="3" fill="#e89aa4"/>
+          </g>
+        </g>
+      </svg>
+      <span class="intro-timer" id="introTimer">Class begins in 12s…</span>
+    </div>
+    <div class="intro-tertiary">
+      <a href="cv.html" target="_blank" rel="noopener">résumé (pdf) ↓</a>
+      <a id="plainBtn" href="#info">plain-text cv →</a>
+    </div>
     <div class="intro-disclaimer">
       <strong>Work in progress:</strong> This site is still being built. Some information may be incomplete or not yet accurate.
-    </div>
-    <div class="intro-progress">
-      <div class="intro-bar"><div class="intro-bar-fill" id="introBarFill"></div></div>
-      <span class="intro-timer" id="introTimer">Entering classroom in 5s…</span>
-    </div>
-    <div class="intro-options">
-      <button class="intro-btn primary" id="enterBtn">Enter the Classroom →</button>
-      <button class="intro-btn" id="textCvBtn">Plain text CV</button>
-      <a class="intro-btn" id="oldSiteBtn" href="old/" target="_blank">Old website ↗</a>
     </div>
   </div>
 </div>
@@ -457,7 +566,8 @@
 </div>
 
 <div class="hud tr">
-  <a class="chip" id="skipBtn" href="#info">Skip the scene →</a>
+  <a class="chip primary" href="cv.html" target="_blank" rel="noopener">📄 Résumé</a>
+  <a class="chip" id="skipBtn" href="#info">Plain-text CV →</a>
 </div>
 
 <div class="hud bl">
@@ -515,12 +625,16 @@
     <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--marker);margin-bottom:16px">Plain text version</div>
     <h1 id="fb-name">Bingyixuan (Mason) Dong</h1>
     <p class="lede" id="fb-lede">CS &amp; Data Science undergrad at UW–Madison, researching AI for education. Honors thesis with Prof. Bilge Mutlu on supporting CS education in the era of LLMs.</p>
+    <p class="fb-oldsite"><a href="cv.html" target="_blank" rel="noopener"><strong>Résumé (PDF) ↓</strong></a> &nbsp;·&nbsp; <a href="old/" target="_blank" rel="noopener">Standard CV site ↗</a></p>
 
     <h2>About</h2>
     <div id="fb-about"></div>
 
     <h2>Research &amp; projects</h2>
     <div id="fb-projects"></div>
+
+    <h2>Honors thesis</h2>
+    <div id="fb-thesis"></div>
 
     <h2>Diary</h2>
     <div id="fb-writing"></div>
@@ -548,12 +662,10 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 </script>
 
 <!-- three.js -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-<script src="content.js?v=34"></script>
-<script src="scene.js?v=34"></script>
-<script src="app.js?v=34"></script>
+<script src="content.js?v=37"></script>
+<script src="scene.js?v=37"></script>
+<script src="app.js?v=37"></script>
 
 <template id="__bundler_thumbnail">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#f2e8d5"/><rect x="40" y="56" width="120" height="72" fill="#4a6e5a" rx="3"/><rect x="48" y="64" width="40" height="6" fill="#fff8e7" opacity="0.7"/><rect x="48" y="76" width="60" height="4" fill="#fff8e7" opacity="0.5"/><rect x="48" y="86" width="30" height="4" fill="#fff8e7" opacity="0.5"/><rect x="30" y="140" width="140" height="10" fill="#8b5a2b"/><rect x="50" y="150" width="8" height="25" fill="#8b5a2b"/><rect x="142" y="150" width="8" height="25" fill="#8b5a2b"/></svg>

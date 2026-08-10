@@ -54,7 +54,7 @@ window.CONTENT = {
     contacts: [
       { label: 'Email',   val: 'bingyxdong@gmail.com',       href: 'mailto:bingyxdong@gmail.com' },
       { label: 'GitHub',  val: 'github.com/bingdong45',         href: 'https://github.com/bingdong45' },
-      { label: 'LinkedIn',val: 'linkedin.com/in/bingyixuan-dong — coming soon', href: '#' },
+      { label: 'LinkedIn',val: 'coming soon', href: '#' },
       { label: 'Website', val: 'bingyixuan.com',              href: 'https://bingyixuan.com' },
     ],
     now: 'Currently looking for: PhD programs in HCI / AI-in-education starting Fall 2026, and research collaborations in LLM-for-learning.',
