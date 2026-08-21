@@ -383,33 +383,70 @@
     font-size: 21px; color: rgba(245,224,144,0.75);
     margin: 2px 0 10px;
   }
-  .intro-doors { display: flex; flex-direction: column; gap: 10px; }
+  .intro-doors { display: flex; flex-direction: column; gap: 12px; }
   .door {
-    display: block; width: 100%; text-align: left;
-    padding: 12px 16px;
-    border-radius: 10px; border: 1.5px dashed rgba(240,235,224,0.32);
-    background: transparent; cursor: pointer; text-decoration: none;
-    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; text-align: left;
+    padding: 14px 16px;
+    border-radius: 10px; border: 2px solid rgba(240,235,224,0.5);
+    background: rgba(240,235,224,0.06);
+    cursor: pointer; text-decoration: none;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.35);
+    transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
   }
   .door:hover {
-    background: rgba(240,235,224,0.07);
-    border-color: rgba(245,224,144,0.6);
-    transform: translateY(-1px);
+    background: rgba(240,235,224,0.12);
+    border-color: #f5e090;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 rgba(0,0,0,0.35);
   }
+  .door:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.35);
+  }
+  .door:focus-visible { outline: 2px solid #f5e090; outline-offset: 3px; }
+  .door-body { flex: 1; min-width: 0; }
   .door-title {
     display: block;
     font-family: 'Patrick Hand', cursive; font-size: 18px;
-    color: rgba(240,235,224,0.92);
+    color: rgba(240,235,224,0.95);
   }
   .door-desc {
     display: block;
     font-family: 'Caveat', cursive; font-size: 16px; line-height: 1.35;
-    color: rgba(240,235,224,0.5); margin-top: 2px;
+    color: rgba(240,235,224,0.55); margin-top: 2px;
   }
-  .door.primary { background: #f0ebe0; border: 1.5px solid #f0ebe0; }
+  .door-go {
+    flex: none; width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid rgba(240,235,224,0.6);
+    color: rgba(240,235,224,0.9);
+    font-size: 19px; line-height: 1;
+    transition: transform 0.15s, background 0.15s, border-color 0.15s;
+  }
+  .door:hover .door-go {
+    transform: translateX(3px);
+    background: rgba(245,224,144,0.15);
+    border-color: #f5e090; color: #f5e090;
+  }
+  .door.primary { background: #f0ebe0; border-color: #f0ebe0; }
   .door.primary .door-title { color: var(--ink); font-weight: 600; }
   .door.primary .door-desc { color: rgba(26,21,16,0.62); }
-  .door.primary:hover { background: #fff; }
+  .door.primary .door-go {
+    border-color: rgba(26,21,16,0.75); color: var(--ink);
+    background: rgba(26,21,16,0.05);
+  }
+  .door.primary:hover { background: #fff; border-color: #fff; }
+  .door.primary:hover .door-go {
+    background: var(--ink); color: #f0ebe0; border-color: var(--ink);
+  }
+  .door-hint {
+    display: block; margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .door .door-hint { color: rgba(245,224,144,0.65); }
+  .door.primary .door-hint { color: rgba(26,21,16,0.55); }
 
   .intro-tertiary {
     display: flex; justify-content: center; gap: 22px;
@@ -522,12 +559,20 @@
     <p class="intro-q">Two ways to read this CV — pick a door:</p>
     <div class="intro-doors">
       <button class="door primary" id="enterBtn">
-        <span class="door-title">Enter the Classroom →</span>
-        <span class="door-desc">The interactive version — a 3D classroom where my research, teaching, and projects are the objects in the room. Starts on its own in a few seconds.</span>
+        <span class="door-body">
+          <span class="door-title">Enter the Classroom</span>
+          <span class="door-desc">The interactive version — a 3D classroom where my research, teaching, and projects are the objects in the room. Starts on its own in a few seconds.</span>
+          <span class="door-hint">Click to enter</span>
+        </span>
+        <span class="door-go" aria-hidden="true">→</span>
       </button>
       <a class="door" href="old/" target="_blank" rel="noopener">
-        <span class="door-title">Professional CV site ↗</span>
-        <span class="door-desc">The classic version — a standard scrolling page for a quick, focused read.</span>
+        <span class="door-body">
+          <span class="door-title">Professional CV site</span>
+          <span class="door-desc">The classic version — a standard scrolling page for a quick, focused read.</span>
+          <span class="door-hint">Click to open ↗</span>
+        </span>
+        <span class="door-go" aria-hidden="true">→</span>
       </a>
     </div>
     <div class="intro-progress" style="margin-top:14px">
