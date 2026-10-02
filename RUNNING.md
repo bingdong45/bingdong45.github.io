@@ -9,10 +9,10 @@ no bundler. You never "compile" anything — you just serve the folder.
 
 ## 0. Get into the project folder
 
-Every command below assumes you're here first. The quotes matter (the path has spaces).
+Every command below assumes you're here first.
 
 ```bash
-cd "/Users/masondong/Projects/Mason Docs/Website/bingdong45.github.io"
+cd /Users/masondong/PersonalWeb/bingdong45.github.io
 ```
 
 ---
@@ -52,18 +52,18 @@ lsof -ti:8000 | xargs kill      # Free up port 8000
 With the server running on port 8000:
 
 ```bash
-open http://localhost:8000                  # Home — the 3D classroom scene
-open http://localhost:8000/cv.html          # CV
+open http://localhost:8000                  # First page — pick the classroom or the standard CV
+open http://localhost:8000/#room            # Straight into the 3D classroom
+open http://localhost:8000/old/             # The standard (professional) CV page
+open http://localhost:8000/cv.html          # "CV available on request" page
 open http://localhost:8000/thesis.html      # Thesis
 open http://localhost:8000/Tutoring_Moves/  # Tutoring Moves Library
 open http://localhost:8000/mathvisual/      # Math visual
-open http://localhost:8000/old/             # Older version of the site
 ```
 
-PDFs served directly:
+The thesis slides are served directly:
 
 ```bash
-open http://localhost:8000/BingyixuanResume.pdf
 open http://localhost:8000/thesis.pdf
 ```
 
@@ -103,16 +103,17 @@ open https://github.com/bingdong45/bingdong45.github.io/actions   # Build status
 
 ## 4. The cache-busting gotcha
 
-`index.html` loads its three scripts with a version query string:
+`index.html` loads its four scripts with a version query string:
 
 ```html
-<script src="content.js?v=36"></script>
-<script src="scene.js?v=36"></script>
-<script src="app.js?v=36"></script>
+<script src="content.js?v=39"></script>
+<script src="sidedesk.js?v=39"></script>
+<script src="scene.js?v=39"></script>
+<script src="app.js?v=39"></script>
 ```
 
-**If you edit `content.js`, `scene.js`, or `app.js`, bump that number** — change all
-three `?v=36` to `?v=37` in `index.html` before you push. Otherwise returning
+**If you edit `content.js`, `sidedesk.js`, `scene.js`, or `app.js`, bump that number** — change
+all four `?v=39` to `?v=40` in `index.html` before you push. Otherwise returning
 visitors' browsers keep serving the old cached file and your change appears to do
 nothing.
 
@@ -149,10 +150,15 @@ git revert <commit-hash>  # Safely undo a commit that's already pushed
 
 | Path                     | What it is                                      |
 | ------------------------ | ----------------------------------------------- |
-| `index.html`             | Homepage                                        |
+| `index.html`             | First page (the two choices) + the classroom's page |
 | `scene.js`               | The 3D classroom scene (Three.js)                |
-| `app.js`                 | Page interactions, overlays, intro countdown     |
-| `content.js`             | Text and data content for the homepage           |
+| `sidedesk.js`            | The side-projects desk: the rabbit and the robot |
+| `app.js`                 | Looking around, hotspots, bottom bar, panels, the game |
+| `content.js`             | Text and data for the classroom panels           |
+| `old/`                   | The standard (professional) CV page              |
+| `cv.html`                | "CV available on request" page (the PDF is no longer on the site) |
+| `EDITING.md`             | Where every word lives                           |
+| `TODO.md`                | What is still missing (kept local — it is in `.gitignore`) |
 | `css/`, `js/`, `assets/` | Styles, scripts, static assets                   |
 | `img/`, `uploads/`       | Images                                           |
 | `CNAME`                  | Custom domain — **do not delete**, breaks the domain |

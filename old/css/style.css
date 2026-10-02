@@ -242,7 +242,7 @@ ul  { list-style: none; }
 .hero-desc {
   font-size: 0.9rem;
   color: var(--color-text-secondary);
-  max-width: 460px;
+  max-width: 500px;
   line-height: 1.8;
   margin-bottom: 22px;
 }
@@ -547,6 +547,272 @@ ul  { list-style: none; }
 
 .project-stack span:first-child::before { display: none; }
 
+.project-desc:last-child { margin-bottom: 0; }
+.project-title + .project-desc { margin-top: 10px; }
+
+/* two-digit numerals other than "01" need a wider gutter */
+.project-card-inner { grid-template-columns: 104px 1fr; }
+.project-body { padding-left: 24px; }
+
+.project-tag-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.project-tag-status::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+/* ========================================
+   CV blocks: sub-headings, entries, publications
+   ======================================== */
+.section[id] { scroll-margin-top: var(--nav-h); }
+
+.nav-cta-outline {
+  background: transparent;
+  border-color: currentColor;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.cv-group + .cv-group { margin-top: 52px; }
+
+.cv-subhead {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lede {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--color-text);
+  max-width: 70ch;
+  margin-top: 20px;
+}
+
+/* Entry: org / role / meta, then bullets or sub-entries */
+.entry {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.section-header + .entry { padding-top: 0; }
+.entry:last-child { border-bottom: none; padding-bottom: 0; }
+
+.entry-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 24px;
+}
+
+.entry-title {
+  font-family: var(--font-sans);
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--color-text);
+  letter-spacing: -0.005em;
+}
+
+.entry-role {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.entry-pi {
+  display: inline-block;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.entry-pi::before {
+  content: '·';
+  margin: 0 8px 0 5px;
+  color: var(--color-text-tertiary);
+  font-weight: 400;
+}
+
+.entry-meta {
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--color-accent);
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-notes {
+  margin-top: 12px;
+  max-width: 70ch;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+}
+
+.entry-notes p + p { margin-top: 8px; }
+
+.note-label {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Sub-entry: one project inside a lab */
+.subentry {
+  margin-top: 18px;
+  padding-left: 20px;
+  border-left: 1px solid var(--color-border);
+}
+
+.subentry-title {
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.entry-bullets {
+  margin-top: 10px;
+  max-width: 70ch;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.subentry > .entry-bullets:first-child { margin-top: 0; }
+
+/* research projects are listed by name only, so consecutive ones sit close together */
+.subentry + .subentry { margin-top: 0; padding-top: 10px; }
+.subentry > .entry-links:first-child { margin-top: 0; }
+
+
+.entry-bullets li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+}
+
+.entry-bullets li::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 0.78em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-text-tertiary);
+}
+
+.entry-links { margin-top: 12px; }
+
+.text-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1px;
+  transition: border-color 0.2s var(--ease);
+}
+
+.text-link:hover { border-color: var(--color-text); }
+
+.entry-bullets .text-link { font-size: inherit; font-weight: 500; }
+
+/* Publications */
+.pub-list { list-style: none; }
+
+.pub {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 0 8px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.pub:first-child { padding-top: 0; }
+.pub:last-child { border-bottom: none; padding-bottom: 0; }
+
+.pub-key {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.85;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.pub-body { max-width: 70ch; }
+
+.pub-title {
+  font-family: var(--font-sans);
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.pub-authors,
+.pub-venue {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+  margin-top: 6px;
+}
+
+.pub-authors strong {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pub-venue { margin-top: 2px; }
+
+.pub-status { margin-top: 12px; }
+
+.status-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+/* Honors & awards */
+.award-list li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.award-list li:first-child { padding-top: 0; }
+.award-list li:last-child { border-bottom: none; padding-bottom: 0; }
+
+.award-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
 /* ========================================
    Contact
    ======================================== */
@@ -649,11 +915,73 @@ ul  { list-style: none; }
 /* ========================================
    Responsive
    ======================================== */
+/* The full nav needs ~870px of container; switch to the drawer before it gets cramped */
+@media (max-width: 1000px) {
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+@media print {
+  .reveal { opacity: 1; transform: none; }
+  .navbar, .portrait-scroll-hint { display: none; }
+  body { padding-top: 0; }
+}
+
 @media (max-width: 768px) {
   .container { padding: 0 20px; }
 
   .nav-links { display: none; }
   .nav-hamburger { display: flex; }
+
+  .cv-group + .cv-group { margin-top: 40px; }
+
+  .entry { padding: 24px 0; }
+
+  /* dates and locations drop under the title instead of sitting right */
+  .entry-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .entry-meta {
+    text-align: left;
+    white-space: normal;
+  }
+
+  /* entry header reads: title, role, PI, then "location · dates" on one line */
+  .entry-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+
+  .entry-head .entry-row { display: contents; }
+
+  .entry-head .entry-title { order: 1; flex: 0 0 100%; }
+  .entry-head .entry-role  { order: 2; flex: 0 0 100%; }
+  .entry-head .entry-meta  { order: 3; margin-top: 4px; }
+
+  .entry-head .entry-row ~ .entry-row .entry-meta::before {
+    content: '·';
+    margin: 0 7px;
+    color: var(--color-text-tertiary);
+  }
+
+  .entry-pi { display: block; }
+  .entry-pi::before { content: none; }
+
+  .subentry { padding-left: 14px; }
+
+  .pub { grid-template-columns: 1fr; }
+  .pub-key { margin-bottom: 2px; }
+
+  .award-list li { gap: 0; }
 
   .hero {
     min-height: auto;
@@ -693,7 +1021,7 @@ ul  { list-style: none; }
 
   .project-num {
     font-size: 2rem;
-    padding: 24px 0 0 24px;
+    padding: 24px 0 12px 24px;
   }
 
   .project-body { padding: 16px 24px 28px; border-left: none; border-top: 1px solid var(--color-border-light); }
@@ -708,3 +1036,29 @@ ul  { list-style: none; }
   .hero h1 { font-size: 1.85rem; }
   .portrait-frame { width: 130px; height: 130px; }
 }
+
+/* ========================================
+   Short-form additions: bio paragraphs, "CV on request", brief background list
+   ======================================== */
+.hero-desc { max-width: 520px; }
+.hero-desc + .hero-desc { margin-top: -10px; }
+
+.hero-note {
+  margin-top: 18px;
+  font-size: 0.78rem;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.02em;
+}
+
+.brief-list li { padding: 11px 0; }
+.brief-list li:first-child { padding-top: 14px; }
+
+.row-sub {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.cv-group + .cv-group { margin-top: 40px; }
+

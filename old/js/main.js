@@ -22,7 +22,11 @@ window.addEventListener("scroll", () => {
 }, { passive: true });
 
 // ── Active nav link on scroll ─────────────────────────────────
-const sections = ["hero", "projects", "contact"];
+// Section ids in page order.
+const sections = ["hero", "publications", "projects", "background", "contact"];
+
+// Sections without their own nav item highlight a neighbouring one.
+const navAlias = {};
 
 function updateActiveLink() {
   const scrollY = window.scrollY + 80; // offset for navbar height
@@ -33,8 +37,15 @@ function updateActiveLink() {
     if (el && el.offsetTop <= scrollY) current = id;
   });
 
+  // The last section is short, so it never reaches the top of the viewport.
+  const atBottom =
+    window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+  if (atBottom) current = sections[sections.length - 1];
+
+  const active = navAlias[current] || current;
+
   document.querySelectorAll(".nav-link").forEach((link) => {
-    link.classList.toggle("active", link.dataset.section === current);
+    link.classList.toggle("active", link.dataset.section === active);
   });
 }
 

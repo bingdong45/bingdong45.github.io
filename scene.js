@@ -107,10 +107,11 @@ window.Classroom = (function () {
     return lines;
   }
 
-  // main whiteboard — drawn like a teacher organized it, marker-feel rectangles
+  // main chalkboard — a plain list of the research projects: number, title, and where/when. No descriptions.
+  // Clicking it walks you up to read it; clicking again opens the Research panel (wired up in app.js).
   function whiteboardTexture(accentColor) {
     const C = (window.CONTENT && window.CONTENT.whiteboard) || {};
-    const items = (C.items || []).slice(0, 5);
+    const items = (C.items || []).slice(0, 10);
     return makeCanvasTexture(2048, 1024, (ctx, W, H) => {
       // chalkboard green base
       ctx.fillStyle = '#2d5a27';
@@ -129,15 +130,15 @@ window.Classroom = (function () {
       // Header — kicker + title on separate lines, no overlap
       ctx.textBaseline = 'top';
 
-      // small kicker label
+      // small kicker label, and where the details live
       ctx.fillStyle = 'rgba(245,224,144,0.60)';
       ctx.font = '42px "JetBrains Mono", monospace';
-      ctx.fillText('TODAY · WHAT I\'M WORKING ON', 80, 26);
+      ctx.fillText('RESEARCH', 80, 26);
 
       // big title
       ctx.fillStyle = '#f0ebe0';
       ctx.font = '88px "Patrick Hand", cursive';
-      ctx.fillText(C.title || 'Things I\'ve been working on', 80, 80);
+      ctx.fillText(C.title || 'What I\'ve been working on', 80, 80);
 
       // sub — one line below title
       ctx.fillStyle = 'rgba(240,235,224,0.62)';
@@ -154,67 +155,49 @@ window.Classroom = (function () {
       ctx.lineTo(W - 80, 236);
       ctx.stroke();
 
-      // 5 zones laid out like the teacher organized them
-      const slots = [
-        { x: 80,   y: 258, w: 560, h: 296 },
-        { x: 720,  y: 258, w: 560, h: 296 },
-        { x: 1360, y: 258, w: 608, h: 296 },
-        { x: 80,   y: 618, w: 870, h: 340 },
-        { x: 1030, y: 618, w: 938, h: 340 },
-      ];
+      // the list — two columns, read down the left one first
+      const perCol = Math.max(1, Math.ceil(items.length / 2));
+      const colX = [80, 1076];
+      const colW = 892, indent = 78;
+      const top = 264;
+      const rowH = Math.min(132, (H - top - 26) / perCol);
 
       items.forEach((it, i) => {
-        const z = slots[i]; if (!z) return;
-        // rectangle - sketchy chalk
-        ctx.strokeStyle = i % 2 ? '#f5e090' : 'rgba(240,235,224,0.7)';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        const jitter = () => (Math.random() - 0.5) * 3;
-        ctx.moveTo(z.x + jitter(), z.y + jitter());
-        ctx.lineTo(z.x + z.w + jitter(), z.y + jitter());
-        ctx.lineTo(z.x + z.w + jitter(), z.y + z.h + jitter());
-        ctx.lineTo(z.x + jitter(), z.y + z.h + jitter());
-        ctx.closePath();
-        ctx.stroke();
+        const col = i < perCol ? 0 : 1;
+        const x = colX[col];
+        const y = top + (i - col * perCol) * rowH;
 
-        // title (truncate if too long, with a visible ellipsis)
-        ctx.fillStyle = '#f0ebe0';
-        ctx.font = '50px "Patrick Hand", cursive';
-        const titleText = `${it.num || String(i+1).padStart(2, '0')}  ${it.title}`;
-        const titleLines = wrapText(ctx, titleText, z.w - 40);
-        titleLines.slice(0, 2).forEach((ln, li) => {
-          const shown = (li === 1 && titleLines.length > 2) ? ln + '…' : ln;
-          ctx.fillText(shown, z.x + 22, z.y + 20 + li * 46);
-        });
-
-        // tag
+        // number, with a little marker underline
         ctx.fillStyle = '#f5e090';
-        ctx.font = '24px "JetBrains Mono", monospace';
-        ctx.fillText((it.meta || '').toLowerCase(), z.x + 22, z.y + Math.min(120, 20 + titleLines.length * 46 + 14));
-
-        // note (short desc, wrapped)
-        ctx.fillStyle = 'rgba(240,235,224,0.88)';
-        ctx.font = '34px "Patrick Hand", cursive';
-        const noteLines = wrapText(ctx, it.desc || '', z.w - 40);
-        const noteTop = z.y + Math.min(165, 20 + Math.min(titleLines.length, 2) * 46 + 58);
-        const maxLines = Math.max(1, Math.floor((z.h - (noteTop - z.y) - 60) / 40));
-        noteLines.slice(0, maxLines).forEach((line, li) => {
-          const shown = (li === maxLines - 1 && noteLines.length > maxLines) ? line + '…' : line;
-          ctx.fillText(shown, z.x + 22, noteTop + li * 40);
-        });
-
-        // little underline flourish
+        ctx.font = '38px "JetBrains Mono", monospace';
+        ctx.fillText(it.num || String(i + 1).padStart(2, '0'), x, y + 10);
         ctx.strokeStyle = accentColor;
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(z.x + 22, z.y + z.h - 36);
-        ctx.lineTo(z.x + 120 + Math.random() * 80, z.y + z.h - 32);
+        ctx.moveTo(x, y + 58);
+        ctx.lineTo(x + 44 + Math.random() * 6, y + 60);
         ctx.stroke();
 
-        // click indicator
-        ctx.fillStyle = '#f5e090';
-        ctx.font = '24px "JetBrains Mono", monospace';
-        ctx.fillText('→ open', z.x + z.w - 140, z.y + z.h - 40);
+        // title (one line; shortened with an ellipsis if it would run into the next column)
+        ctx.fillStyle = '#f0ebe0';
+        ctx.font = '50px "Patrick Hand", cursive';
+        let title = it.title || '';
+        const maxTitle = colW - indent - (it.now ? 110 : 0);
+        while (title.length > 4 && ctx.measureText(title).width > maxTitle) title = title.slice(0, -2).trimEnd() + '…';
+        ctx.fillText(title, x + indent, y);
+        if (it.now) {
+          const tw = ctx.measureText(title).width;
+          ctx.fillStyle = '#f5e090';
+          ctx.font = '26px "JetBrains Mono", monospace';
+          ctx.fillText('· now', x + indent + tw + 16, y + 20);
+        }
+
+        // where and when — small, under the title
+        ctx.fillStyle = 'rgba(245,224,144,0.72)';
+        ctx.font = '26px "JetBrains Mono", monospace';
+        let meta = [it.lab, it.when].filter(Boolean).join(' · ').toLowerCase();
+        while (meta.length > 4 && ctx.measureText(meta).width > colW - indent) meta = meta.slice(0, -2).trimEnd() + '…';
+        ctx.fillText(meta, x + indent, y + 66);
       });
     });
   }
@@ -265,13 +248,14 @@ window.Classroom = (function () {
       // role lines — large enough to read
       ctx.fillStyle = 'rgba(240,235,224,0.92)';
       ctx.font = '84px "Caveat", cursive';
-      ctx.fillText('CS & Data Science', 64, 692);
+      const B = C.board || {};
+      ctx.fillText(B.line1 || 'Computer Science', 64, 692);
       ctx.font = '74px "Caveat", cursive';
       ctx.fillStyle = 'rgba(240,235,224,0.72)';
-      ctx.fillText('UW–Madison  ·  AI & Education', 64, 784);
+      ctx.fillText(B.line2 || '', 64, 784);
 
       // tag chips
-      const tags = ['AI', 'Education', 'HRI', 'VR', 'NLP'];
+      const tags = B.tags || [];
       ctx.font = '52px "JetBrains Mono", monospace';
       let tx = 64;
       const tagY = 900;
@@ -384,23 +368,12 @@ window.Classroom = (function () {
       // heading
       ctx.fillStyle = accentColor;
       ctx.font = '54px "Patrick Hand", cursive';
-      ctx.fillText("Today's assignment", 120, 90);
+      ctx.fillText('Turned in ✓', 120, 90);
 
       ctx.fillStyle = '#1a1510';
       ctx.font = '40px "Caveat", cursive';
-      const body = [
-        'Honors thesis:',
-        '',
-        '"Toward Supporting CS',
-        'Education in the Era of',
-        'Artificial Intelligence"',
-        '',
-        'advisor: Prof. Bilge Mutlu',
-        'draft in progress —',
-        'defending spring 2026.',
-        '',
-        '— Mason',
-      ];
+      const A = (window.CONTENT && window.CONTENT.assignment) || {};
+      const body = A.paper || ['Honors thesis'];
       body.forEach((l, i) => ctx.fillText(l, 120, 168 + i * 48));
 
       // corner fold
@@ -638,6 +611,15 @@ window.Classroom = (function () {
     const hemi = new THREE.HemisphereLight(0xfdecc0, 0x3a3a20, 0.4);
     scene.add(hemi);
 
+    // bounce off the bright front wall: a level light travelling toward the back of the room, so the
+    // back wall and the door are not left in the dark when you turn around. Being level and aimed
+    // at +z it adds nothing to the floor, the desk tops, or anything that faces the boards.
+    const backFill = new THREE.DirectionalLight(0xffeccc, 0.34);
+    backFill.position.set(0, 1.5, -6);
+    backFill.target.position.set(0, 1.5, 0);
+    scene.add(backFill);
+    scene.add(backFill.target);
+
     // gallery-style wash on the front boards — keeps the room's focal point bright
     const boardSpot = new THREE.SpotLight(0xfff2d8, 0.55, 12, 0.95, 0.9, 1.2);
     boardSpot.position.set(0, 3.3, -1.4);
@@ -746,10 +728,24 @@ window.Classroom = (function () {
     frontWall.position.set(0, roomH / 2, -roomD / 2);
     scene.add(frontWall);
 
-    const backWall = new THREE.Mesh(new THREE.PlaneGeometry(roomW, roomH), wallMat);
-    backWall.position.set(0, roomH / 2, roomD / 2);
-    backWall.rotation.y = Math.PI;
-    scene.add(backWall);
+    // back wall — three pieces around the doorway (the door itself is built further down,
+    // see "classroom door"). DOOR = the opening: centre x, width, height.
+    const DOOR = { x: 1.8, w: 0.94, h: 2.08, jamb: 0.09 };
+    [[-roomW / 2, DOOR.x - DOOR.w / 2, 0, roomH],
+     [DOOR.x + DOOR.w / 2, roomW / 2, 0, roomH],
+     [DOOR.x - DOOR.w / 2, DOOR.x + DOOR.w / 2, DOOR.h, roomH]].forEach(([x0, x1, y0, y1]) => {
+      const geo = new THREE.PlaneGeometry(x1 - x0, y1 - y0);
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      // same texture scale as the other walls, continuous across the pieces
+      const pos = geo.attributes.position, uv = geo.attributes.uv;
+      for (let i = 0; i < uv.count; i++) {
+        uv.setXY(i, (roomW / 2 - cx + pos.getX(i)) / roomW, (cy + pos.getY(i)) / roomH);
+      }
+      const piece = new THREE.Mesh(geo, wallMat);
+      piece.position.set(cx, cy, roomD / 2);
+      piece.rotation.y = Math.PI;
+      scene.add(piece);
+    });
 
     const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(roomD, roomH), wallMat);
     leftWall.position.set(-roomW / 2, roomH / 2, 0);
@@ -761,10 +757,12 @@ window.Classroom = (function () {
     rightWall.rotation.y = -Math.PI / 2;
     scene.add(rightWall);
 
-    // baseboard
+    // baseboard (the back run stops either side of the door frame)
     const baseMat = new THREE.MeshLambertMaterial({ color: 0x6b4a2a });
+    const doorL = DOOR.x - DOOR.w / 2 - DOOR.jamb, doorR = DOOR.x + DOOR.w / 2 + DOOR.jamb;
     [[-0, 0.08, -roomD/2 + 0.01, roomW, 0.16, 0.02],
-     [-0, 0.08, roomD/2 - 0.01, roomW, 0.16, 0.02],
+     [(-roomW/2 + doorL) / 2, 0.08, roomD/2 - 0.01, doorL + roomW/2, 0.16, 0.02],
+     [(doorR + roomW/2) / 2, 0.08, roomD/2 - 0.01, roomW/2 - doorR, 0.16, 0.02],
      [-roomW/2 + 0.01, 0.08, 0, 0.02, 0.16, roomD],
      [roomW/2 - 0.01, 0.08, 0, 0.02, 0.16, roomD]].forEach(p => {
       const b = new THREE.Mesh(new THREE.BoxGeometry(p[3], p[4], p[5]), baseMat);
@@ -791,42 +789,8 @@ window.Classroom = (function () {
       new THREE.MeshLambertMaterial({ map: wbTex })
     );
     whiteboard.position.set(0, 1.85, -roomD / 2 + 0.12);
-    whiteboard.userData.hit = 'whiteboard';
-    whiteboard.userData.label = 'Projects';
     scene.add(whiteboard);
-    // NOTE: whiteboard itself is NOT in `interactive` — the 5 per-project pick planes below handle clicks
-    // so each project gets its own hover glow.
-
-    // Per-project invisible pick planes, aligned to the 5 zones drawn inside whiteboardTexture().
-    // Canvas is 2048x1024; board plane is 4.6 x 2.9 m. Convert zone rects (x,y,w,h) to local plane coords.
-    //   zoneX (local) = (zone.x + zone.w/2) / 2048 * 4.6 - 4.6/2
-    //   zoneY (local) = 2.9/2 - (zone.y + zone.h/2) / 1024 * 2.9
-    //   zoneW         = zone.w / 2048 * 4.6
-    //   zoneH         = zone.h / 1024 * 2.9
-    const wbZoneRects = [
-      { x: 80,   y: 230, w: 560, h: 310 },
-      { x: 720,  y: 230, w: 560, h: 310 },
-      { x: 1360, y: 230, w: 608, h: 310 },
-      { x: 80,   y: 610, w: 870, h: 350 },
-      { x: 1030, y: 610, w: 938, h: 350 },
-    ];
-    const wbItems = ((window.CONTENT && window.CONTENT.whiteboard && window.CONTENT.whiteboard.items) || []).slice(0, 5);
-    wbZoneRects.forEach((z, i) => {
-      const localX = (z.x + z.w / 2) / 2048 * 4.6 - 4.6 / 2;
-      const localY = 2.9 / 2 - (z.y + z.h / 2) / 1024 * 2.9;
-      const w = z.w / 2048 * 4.6;
-      const h = z.h / 1024 * 2.9;
-      const pick = new THREE.Mesh(
-        new THREE.PlaneGeometry(w, h),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false })
-      );
-      pick.position.set(localX, 1.85 + localY, -roomD / 2 + 0.125);
-      pick.userData.hit = 'whiteboard';
-      pick.userData.projectIndex = i;
-      pick.userData.label = wbItems[i] ? wbItems[i].title : `Project ${i + 1}`;
-      scene.add(pick);
-      interactive.push(pick);
-    });
+    // app.js adds the board to `interactive` (via state.anchors) so a click walks you up to it.
 
     // marker tray
     const tray = new THREE.Mesh(
@@ -906,7 +870,7 @@ window.Classroom = (function () {
     // ribbon cards — each one individually hoverable and clickable
     contactEntries.forEach((c, i) => {
       const cy = ribbonTopY - i * ribbonStep;
-      const tex = contactRibbonTexture(c.label, c.val, ribbonIcons[i] || 'email', ribbonColors[i % ribbonColors.length]);
+      const tex = contactRibbonTexture(c.label, c.val, c.icon || ribbonIcons[i] || 'email', ribbonColors[i % ribbonColors.length]);
       const card = new THREE.Mesh(
         new THREE.PlaneGeometry(ribbonW3, ribbonH3),
         new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, metalness: 0.0 })
@@ -1021,7 +985,7 @@ window.Classroom = (function () {
     assignSheet.position.set(-0.55, 0.937, 0.08);
     assignSheet.rotation.y = 0.10;
     assignSheet.userData.hit = 'assignment';
-    assignSheet.userData.label = "Today's assignment";
+    assignSheet.userData.label = 'Honors thesis';
     teacherDesk.add(assignSheet);
     interactive.push(assignSheet);
     // open textbook
@@ -1119,9 +1083,10 @@ window.Classroom = (function () {
     fishTail.position.z = 0.026;
     fish.add(fishTail);
 
-    // ---- trash can in front-left corner ----
+    // ---- trash can on the floor at the open end of the teacher's desk (the desk fills the
+    // corner itself, so the can stands just past it, below the corner of the big board) ----
     const trashGroup = new THREE.Group();
-    trashGroup.position.set(-roomW/2 + 0.35, 0, -roomD/2 + 0.45);
+    trashGroup.position.set(-2.28, 0, -3.45);
     scene.add(trashGroup);
 
     const trashProfile = [
@@ -1296,7 +1261,7 @@ window.Classroom = (function () {
     notebook.castShadow = true;
     notebook.receiveShadow = true;
     notebook.userData.hit = 'notebook';
-    notebook.userData.label = 'Open the diary';
+    notebook.userData.label = 'The diary';
     diaryGroup.add(notebook);
     interactive.push(notebook);
     // page block (slightly narrower = "shorter in the middle" = looks like a real book)
@@ -1537,7 +1502,7 @@ window.Classroom = (function () {
 
     laptopGroup.add(laptopScreenGroup);
     laptopScreen.userData.hit = 'laptop';
-    laptopScreen.userData.label = 'Open live demo';
+    laptopScreen.userData.label = 'Live demos';
     interactive.push(laptopScreen);
 
     // Pencil — built as one group so every part stays aligned, resting in the open
@@ -1611,7 +1576,7 @@ window.Classroom = (function () {
     );
     mugBody.position.set(0.58, 0.885, -0.24);
     mugBody.userData.hit = 'mug';
-    mugBody.userData.label = 'Current rotation';
+    mugBody.userData.label = 'Currently';
     myDesk.add(mugBody);
     interactive.push(mugBody);
     const mugHandle = new THREE.Mesh(
@@ -1644,31 +1609,62 @@ window.Classroom = (function () {
 
     // (paper / today's assignment removed from the desk — lives as the whiteboard's kicker now)
 
-    // ---- my chair (a real chair, not a floating seat) ----
-    const myChair = new THREE.Group();
-    myChair.position.set(0, 0, 0.55);
-    scene.add(myChair);
+    // ---- chairs: one builder for every seat in the room. Four legs down to the floor, the
+    // back posts carry a slightly reclined backrest, side stretchers tie the legs together.
+    // Origin = the floor under the seat centre; the sitter faces -z. Seat top at 0.45 × scale. ----
     const chairWoodMat = new THREE.MeshStandardMaterial({ color: 0x8b6640, roughness: 0.8, metalness: 0.0 });
     const chairLegMat = new THREE.MeshLambertMaterial({ color: 0x4a2e14 });
-    const chairSeat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.5), chairWoodMat);
-    chairSeat.position.y = 0.52;
-    chairSeat.castShadow = true;
-    chairSeat.receiveShadow = true;
-    myChair.add(chairSeat);
-    [[-0.21, -0.21], [0.21, -0.21], [-0.21, 0.21], [0.21, 0.21]].forEach(([lx, lz]) => {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.52, 0.05), chairLegMat);
-      leg.position.set(lx, 0.26, lz);
-      myChair.add(leg);
-    });
-    // backrest behind the camera — only glimpsed when looking down, but grounds the seat
-    [-0.19, 0.19].forEach(ox => {
-      const up = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.05), chairLegMat);
-      up.position.set(ox, 0.79, 0.23);
-      myChair.add(up);
-    });
-    const chairBackrest = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.4, 0.04), chairWoodMat);
-    chairBackrest.position.set(0, 0.94, 0.23);
-    myChair.add(chairBackrest);
+    const chairGeo = {
+      seat: new THREE.BoxGeometry(0.42, 0.035, 0.42),
+      leg: new THREE.BoxGeometry(0.035, 0.44, 0.035),
+      post: new THREE.BoxGeometry(0.035, 0.44, 0.03).translate(0, 0.22, 0),
+      rail: new THREE.BoxGeometry(0.35, 0.12, 0.022),
+      slat: new THREE.BoxGeometry(0.35, 0.055, 0.018),
+      stretcher: new THREE.BoxGeometry(0.02, 0.025, 0.36),
+    };
+    function makeChair(scale = 1) {
+      const g = new THREE.Group();
+      const seat = new THREE.Mesh(chairGeo.seat, chairWoodMat);
+      seat.position.y = 0.4325;
+      seat.castShadow = true;
+      seat.receiveShadow = true;
+      g.add(seat);
+      [[-0.185, -0.185], [0.185, -0.185], [-0.185, 0.185], [0.185, 0.185]].forEach(([lx, lz]) => {
+        const leg = new THREE.Mesh(chairGeo.leg, chairLegMat);
+        leg.position.set(lx, 0.22, lz);
+        g.add(leg);
+      });
+      [-0.185, 0.185].forEach(lx => {
+        const st = new THREE.Mesh(chairGeo.stretcher, chairLegMat);
+        st.position.set(lx, 0.15, 0);
+        g.add(st);
+      });
+      // backrest: the two back posts carry on above the seat, leaning back a little
+      const back = new THREE.Group();
+      back.position.set(0, 0.43, 0.185);
+      back.rotation.x = 0.11;
+      [-0.185, 0.185].forEach(lx => {
+        const post = new THREE.Mesh(chairGeo.post, chairLegMat);
+        post.position.x = lx;
+        back.add(post);
+      });
+      const rail = new THREE.Mesh(chairGeo.rail, chairWoodMat);
+      rail.position.set(0, 0.375, 0);
+      rail.castShadow = true;
+      back.add(rail);
+      const slat = new THREE.Mesh(chairGeo.slat, chairWoodMat);
+      slat.position.set(0, 0.2, 0);
+      back.add(slat);
+      g.add(back);
+      g.scale.setScalar(scale);
+      return g;
+    }
+
+    // ---- my chair — sized to go with my (larger) desk, centred under the camera so the
+    // backrest is behind the visitor's head and the seat front is tucked under the desk ----
+    const myChair = makeChair(1.33);
+    myChair.position.set(0, 0, 0.8);
+    scene.add(myChair);
 
     // ======================================================================
     // Classroom decorations
@@ -1726,6 +1722,17 @@ window.Classroom = (function () {
       b.rotation.y = 0.1 + i * 0.05;
       bookshelfGroup.add(b);
     }
+    // one invisible pick volume over the shelves of books — the "favorite books" section.
+    // It stops at the top board, so the globe standing on the bookcase stays its own target.
+    const shelfPick = new THREE.Mesh(
+      new THREE.BoxGeometry(1.24, 1.96, 0.32),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+    );
+    shelfPick.position.set(0, 1.0, 0.01);
+    shelfPick.userData.hit = 'bookshelf';
+    shelfPick.userData.label = 'Favorite books';
+    bookshelfGroup.add(shelfPick);
+    interactive.push(shelfPick);
 
     // ---- Globe on top of the bookshelf ----
     const globeGroup = new THREE.Group();
@@ -1847,8 +1854,8 @@ window.Classroom = (function () {
     scene.add(makePlant(-roomW/2 + 0.4, -2.6, 1.0));  // near window, front
     scene.add(makePlant(-roomW/2 + 0.4, 2.8, 0.85));  // near window, back
     scene.add(makePlant(-roomW/2 + 0.45, 0.3, 0.7));  // near window, middle (smaller)
-    // Back-right corner floor plant
-    scene.add(makePlant(roomW/2 - 0.45, roomD/2 - 0.8, 0.9));
+    // Back-right corner floor plant (tucked into the corner, clear of the cubbies by the door)
+    scene.add(makePlant(roomW/2 - 0.38, roomD/2 - 0.42, 0.9));
     // Tiny succulent on the bookshelf top (next to the globe)
     const shelfPlant = makePlant(0, 0, 0.55);
     shelfPlant.position.set(roomW/2 - 0.25, 2.02, -2.1);
@@ -1930,12 +1937,12 @@ window.Classroom = (function () {
       flagShape.lineTo( 0.0, -0.62);  // tip pointing down
       flagShape.closePath();
       const pennantGeo = new THREE.ShapeGeometry(flagShape);
-      // UV: u = (x+0.26)/0.52, v = -y/0.62  (0 at top, 1 at tip)
+      // UV: u = (x+0.26)/0.52, v = 1 + y/0.62  (top edge = top of the canvas, tip = bottom)
       const uv = pennantGeo.attributes.uv;
       for (let i = 0; i < uv.count; i++) {
         const px = pennantGeo.attributes.position.getX(i);
         const py = pennantGeo.attributes.position.getY(i);
-        uv.setXY(i, (px + 0.26) / 0.52, -py / 0.62);
+        uv.setXY(i, (px + 0.26) / 0.52, 1 + py / 0.62);
       }
       uv.needsUpdate = true;
       const pennant = new THREE.Mesh(
@@ -1948,14 +1955,14 @@ window.Classroom = (function () {
         new THREE.BoxGeometry(0.54, 0.032, 0.025),
         new THREE.MeshLambertMaterial({ color: 0x3a2818 })
       );
-      strip.position.set(0, 0.016, -0.01);
+      strip.position.set(0, 0.016, 0.0);
       g.add(strip);
       return g;
     }
     // Two pennants on the LEFT WALL, facing into the room (+X direction)
     // rotation.y = -π/2 makes the ShapeGeometry face +X (into room)
-    scene.add(makePennant(-roomW/2 + 0.04, 2.85, 2.25, '#c41e3a', 'WISC', null, -Math.PI/2));
-    scene.add(makePennant(-roomW/2 + 0.04, 2.85, 2.95, '#1e3a6e', 'UW',   null, -Math.PI/2));
+    scene.add(makePennant(-roomW/2 + 0.04, 2.85, 2.25, '#c41e3a', 'WISC', null, Math.PI/2));
+    scene.add(makePennant(-roomW/2 + 0.04, 2.85, 2.95, '#1e3a6e', 'UW',   null, Math.PI/2));
 
     // ---- Poster on the right wall ----
     function makePoster(x, y, z, rotY, title, bgColor) {
@@ -2294,41 +2301,78 @@ window.Classroom = (function () {
     });
 
     // ---- extra desks to either side to make it feel like a classroom ----
-    function otherDesk(x, z) {
+    const otherDeskTopMat = new THREE.MeshLambertMaterial({ map: woodTexture(1) });
+    const otherDeskTopGeo = new THREE.BoxGeometry(1.2, 0.06, 0.6);
+    const otherDeskLegGeo = new THREE.BoxGeometry(0.04, 0.75, 0.04);
+    // chair = [dx, dz, turn] relative to the desk: dz 0.43 is tucked in (seat front under the top)
+    function otherDesk(x, z, chair) {
       const g = new THREE.Group();
-      const top = new THREE.Mesh(
-        new THREE.BoxGeometry(1.2, 0.06, 0.6),
-        new THREE.MeshLambertMaterial({ map: woodTexture(1) })
-      );
+      const top = new THREE.Mesh(otherDeskTopGeo, otherDeskTopMat);
       top.position.y = 0.78;
+      top.castShadow = true;
+      top.receiveShadow = true;
       g.add(top);
-      [[-0.55, 0.39, -0.25], [0.55, 0.39, -0.25], [-0.55, 0.39, 0.25], [0.55, 0.39, 0.25]].forEach(p => {
-        const l = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.78, 0.04), new THREE.MeshLambertMaterial({ color: 0x4a2e14 }));
-        l.position.set(p[0], p[1], p[2]); g.add(l);
+      [[-0.55, -0.25], [0.55, -0.25], [-0.55, 0.25], [0.55, 0.25]].forEach(([lx, lz]) => {
+        const l = new THREE.Mesh(otherDeskLegGeo, chairLegMat);
+        l.position.set(lx, 0.375, lz);
+        g.add(l);
       });
-      const seatMat = new THREE.MeshLambertMaterial({ color: 0x7a5a3a });
-      const legMat2 = new THREE.MeshLambertMaterial({ color: 0x4a2e14 });
-      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.04, 0.45), seatMat);
-      seat.position.set(0, 0.42, 0.6);
-      g.add(seat);
-      // chair back
-      const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.43, 0.38, 0.04), seatMat);
-      chairBack.position.set(0, 0.66, 0.82);
-      g.add(chairBack);
-      // back uprights
-      [-0.18, 0.18].forEach(ox => {
-        const up = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.44, 0.04), legMat2);
-        up.position.set(ox, 0.52, 0.84);
-        g.add(up);
-      });
+      const c = makeChair();
+      c.position.set(chair[0], 0, chair[1]);
+      c.rotation.y = chair[2];
+      g.add(c);
       g.position.set(x, 0, z);
       return g;
     }
-    // other student desks — flanking mine and one row behind, leaving the front clear
-    [[-2.4, 0.0], [2.4, 0.0], [-2.4, 1.6], [2.4, 1.6], [0, 2.4]].forEach(([x,z], i) => {
-      const d = otherDesk(x, z);
+    // small props for the other desks: a short pile of books, a cup of pencils
+    function bookPile(colors) {
+      const g = new THREE.Group();
+      let y = 0;
+      colors.forEach((col, i) => {
+        const h = 0.03 + (i % 2) * 0.012;
+        const b = new THREE.Mesh(
+          new THREE.BoxGeometry(0.24 - i * 0.02, h, 0.17 - i * 0.012),
+          new THREE.MeshLambertMaterial({ color: col })
+        );
+        b.position.y = y + h / 2;
+        b.rotation.y = (i - 1) * 0.16;
+        b.castShadow = true;
+        g.add(b);
+        y += h;
+      });
+      return g;
+    }
+    function pencilCup(cupColor) {
+      const g = new THREE.Group();
+      const cup = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.036, 0.031, 0.095, 14),
+        new THREE.MeshLambertMaterial({ color: cupColor })
+      );
+      cup.position.y = 0.0475;
+      cup.castShadow = true;
+      g.add(cup);
+      [0xe7b10a, 0xc0392b, 0x355070, 0x41b3a3].forEach((col, i) => {
+        const p = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.0055, 0.0055, 0.15, 6),
+          new THREE.MeshLambertMaterial({ color: col })
+        );
+        const a = i * 1.7;
+        p.position.set(Math.cos(a) * 0.012, 0.105, Math.sin(a) * 0.012);
+        p.rotation.set(Math.sin(a) * 0.16, 0, -Math.cos(a) * 0.16);
+        g.add(p);
+      });
+      return g;
+    }
+    // other student desks — one beside mine and one row behind, leaving the front clear.
+    // (The spot to my left is the side-projects desk, so the back-left desk sits clear of it.)
+    // Chairs: mostly tucked in, one left pulled out and turned as if someone just got up.
+    [[2.4, 0.0, [0, 0.43, 0]],
+     [-2.7, 1.9, [-0.04, 0.47, -0.2]],
+     [2.4, 1.6, [0.12, 0.68, 0.55]],
+     [0, 2.4, [0.03, 0.45, 0.07]]].forEach(([x, z, chair], i) => {
+      const d = otherDesk(x, z, chair);
       // leave a sheet of loose paper on a few desks
-      if (i !== 1 && i !== 4) {
+      if (i !== 0 && i !== 3) {
         const sheet = new THREE.Mesh(
           new THREE.BoxGeometry(0.24, 0.002, 0.3),
           new THREE.MeshLambertMaterial({ color: 0xfaf6e8 })
@@ -2337,8 +2381,36 @@ window.Classroom = (function () {
         sheet.rotation.y = (i * 0.7) % 1 - 0.4;
         d.add(sheet);
       }
+      // a pile of books and a pencil cup on the desk behind mine; a pencil cup back-left
+      if (i === 3) {
+        const pile = bookPile([0x355070, 0xb85450, 0xd9bf77]);
+        pile.position.set(-0.3, 0.81, -0.06);
+        pile.rotation.y = 0.25;
+        d.add(pile);
+        const cup = pencilCup(0x6d597a);
+        cup.position.set(0.38, 0.81, -0.14);
+        d.add(cup);
+      }
+      if (i === 1) {
+        const cup = pencilCup(0x41b3a3);
+        cup.position.set(-0.4, 0.81, -0.12);
+        d.add(cup);
+      }
       scene.add(d);
     });
+
+    // ---- side-projects desk right beside my seat, on the left: the AI rabbit + the RPS robot ----
+    // Built in sidedesk.js. Turned a quarter-turn so its front edge faces the seat; a small gap
+    // separates it from my desk (whose left edge is at x ≈ -0.95). If this placement changes,
+    // update VISITOR in sidedesk.js (the seat in the desk's local frame).
+    let sideDesk = null;
+    if (window.SideDesk) {
+      sideDesk = window.SideDesk.build({ woodMap: woodTexture(1), accentHex: opts.accentHex });
+      sideDesk.group.position.set(-1.4, 0, 0.55);
+      sideDesk.group.rotation.y = Math.PI / 2;
+      scene.add(sideDesk.group);
+      sideDesk.interactive.forEach(o => interactive.push(o));
+    }
 
     // ---- paper airplane resting on the right neighbor's desk ----
     const planeMat = new THREE.MeshLambertMaterial({ color: 0xfbf8ec, side: THREE.DoubleSide });
@@ -2358,14 +2430,17 @@ window.Classroom = (function () {
     scene.add(paperPlane);
 
     // every so often the plane takes off, glides across the room, and misses
-    // the trash can — landing next to the other failed shots
+    // the trash can — landing next to the other failed shots.
+    // The route climbs off the neighbour's desk, crosses in front of the visitor (well ahead of
+    // my desk, above head height), and comes down over the open floor in front of the boards —
+    // clear of the teacher's desk (x < -2.5) — to stop on the floor just short of the can.
     const planeCurve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(2.25, 0.85, -0.05),
-      new THREE.Vector3(1.4, 1.6, -0.9),
-      new THREE.Vector3(-0.3, 2.1, -1.6),
-      new THREE.Vector3(-2.0, 1.8, -2.3),
-      new THREE.Vector3(-3.3, 1.1, -2.9),
-      new THREE.Vector3(-3.75, 0.06, -3.15),
+      new THREE.Vector3(1.5, 1.55, -0.85),
+      new THREE.Vector3(0.1, 2.05, -1.7),
+      new THREE.Vector3(-1.1, 1.75, -2.35),
+      new THREE.Vector3(-1.72, 0.9, -2.78),
+      new THREE.Vector3(-1.98, 0.05, -2.98),
     ]);
     const planeHome = { pos: paperPlane.position.clone(), rotY: paperPlane.rotation.y };
     const planeFlight = { active: false, start: 0, next: 0, landed: false, landedAt: 0 };
@@ -2428,6 +2503,559 @@ window.Classroom = (function () {
       }
     });
 
+    // ======================================================================
+    // The back of the room: the door, and the things a classroom keeps around it.
+    // All of it is scenery — none of it is added to `interactive`.
+    // ======================================================================
+
+    // ---- classroom door on the back wall, standing ajar (the entrance walk starts here) ----
+    const doorGroup = new THREE.Group();
+    doorGroup.position.set(DOOR.x, 0, roomD / 2);
+    scene.add(doorGroup);
+    const doorTrimMat = new THREE.MeshLambertMaterial({ color: 0x5c3a1c });
+    const doorMetalMat = new THREE.MeshStandardMaterial({ color: 0xbdb39a, roughness: 0.45, metalness: 0.15 });
+    // frame: two jambs and a head, as deep as the wall is thick, plus a metal threshold
+    const doorFrameD = 0.16;
+    [-1, 1].forEach(s => {
+      const jamb = new THREE.Mesh(new THREE.BoxGeometry(DOOR.jamb, DOOR.h + DOOR.jamb, doorFrameD), doorTrimMat);
+      jamb.position.set(s * (DOOR.w + DOOR.jamb) / 2, (DOOR.h + DOOR.jamb) / 2, 0);
+      doorGroup.add(jamb);
+    });
+    const doorHead = new THREE.Mesh(new THREE.BoxGeometry(DOOR.w, DOOR.jamb, doorFrameD), doorTrimMat);
+    doorHead.position.set(0, DOOR.h + DOOR.jamb / 2, 0);
+    doorGroup.add(doorHead);
+    const doorSill = new THREE.Mesh(new THREE.BoxGeometry(DOOR.w, 0.012, doorFrameD), doorMetalMat);
+    doorSill.position.y = 0.006;
+    doorGroup.add(doorSill);
+
+    // the leaf hangs on the corner-side jamb and swings into the room; from the seat you see
+    // the open gap on the near side. Leaf-local: hinge edge at x = 0, the leaf runs to -x,
+    // -z is the face toward the room.
+    const leafW = DOOR.w - 0.016, leafH = DOOR.h - 0.02, leafT = 0.045;
+    const doorHinge = new THREE.Group();
+    doorHinge.position.set(DOOR.w / 2 - 0.006, 0.01, -0.035);
+    doorHinge.rotation.y = -0.45;
+    doorGroup.add(doorHinge);
+    // narrow window near the latch edge, cut out of the leaf
+    const lite = { x0: -leafW + 0.12, x1: -leafW + 0.31, y0: 1.18, y1: 1.84 };
+    const leafShape = new THREE.Shape();
+    leafShape.moveTo(-leafW, 0);
+    leafShape.lineTo(0, 0);
+    leafShape.lineTo(0, leafH);
+    leafShape.lineTo(-leafW, leafH);
+    leafShape.closePath();
+    const liteHole = new THREE.Path();
+    liteHole.moveTo(lite.x0, lite.y0);
+    liteHole.lineTo(lite.x0, lite.y1);
+    liteHole.lineTo(lite.x1, lite.y1);
+    liteHole.lineTo(lite.x1, lite.y0);
+    liteHole.closePath();
+    leafShape.holes.push(liteHole);
+    const leafGeo = new THREE.ExtrudeGeometry(leafShape, { depth: leafT, bevelEnabled: false });
+    leafGeo.translate(0, 0, -leafT / 2);
+    {
+      // lay the wood texture so its grain runs up the door
+      const p = leafGeo.attributes.position, uv = leafGeo.attributes.uv;
+      for (let i = 0; i < uv.count; i++) uv.setXY(i, p.getY(i) / leafH, (p.getX(i) + leafW) / leafW);
+    }
+    const doorLeaf = new THREE.Mesh(leafGeo, new THREE.MeshLambertMaterial({ map: woodTexture(1) }));
+    doorHinge.add(doorLeaf);
+    const liteCX = (lite.x0 + lite.x1) / 2, liteCY = (lite.y0 + lite.y1) / 2;
+    const liteW = lite.x1 - lite.x0, liteH = lite.y1 - lite.y0;
+    const doorGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(liteW, liteH, 0.006),
+      new THREE.MeshLambertMaterial({ color: 0xcfe8f0, transparent: true, opacity: 0.28, depthWrite: false })
+    );
+    doorGlass.position.set(liteCX, liteCY, 0);
+    doorHinge.add(doorGlass);
+    // bead around the glass (room face)
+    [[liteCX, lite.y0, liteW + 0.036, 0.018], [liteCX, lite.y1, liteW + 0.036, 0.018],
+     [lite.x0, liteCY, 0.018, liteH + 0.036], [lite.x1, liteCY, 0.018, liteH + 0.036]].forEach(([bx, by, bw, bh]) => {
+      const bead = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, 0.008), doorTrimMat);
+      bead.position.set(bx, by, -leafT / 2 - 0.003);
+      doorHinge.add(bead);
+    });
+    // kick plate along the bottom of the room face
+    const kickPlate = new THREE.Mesh(new THREE.BoxGeometry(leafW - 0.06, 0.24, 0.004), doorMetalMat);
+    kickPlate.position.set(-leafW / 2, 0.15, -leafT / 2 - 0.002);
+    doorHinge.add(kickPlate);
+    // lever handle on both faces
+    [-1, 1].forEach(s => {
+      const hx = -leafW + 0.065, hy = 1.0;
+      const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.027, 0.012, 14), doorMetalMat);
+      rose.rotation.x = Math.PI / 2;
+      rose.position.set(hx, hy, s * (leafT / 2 + 0.006));
+      doorHinge.add(rose);
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.045, 8), doorMetalMat);
+      neck.rotation.x = Math.PI / 2;
+      neck.position.set(hx, hy, s * (leafT / 2 + 0.03));
+      doorHinge.add(neck);
+      const lever = new THREE.Mesh(new THREE.BoxGeometry(0.125, 0.02, 0.016), doorMetalMat);
+      lever.position.set(hx + 0.05, hy, s * (leafT / 2 + 0.052));
+      doorHinge.add(lever);
+    });
+    // three hinge knuckles
+    [0.24, 1.03, 1.82].forEach(hy => {
+      const knuckle = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.1, 8), doorMetalMat);
+      knuckle.position.set(0.004, hy, -leafT / 2 - 0.004);
+      doorHinge.add(knuckle);
+    });
+
+    // a glimpse of the hallway through the gap and the door's window: plain walls, a grey floor,
+    // and a row of lockers along the far side
+    const hallShell = new THREE.Mesh(
+      new THREE.BoxGeometry(4.0, 2.9, 1.7),
+      new THREE.MeshLambertMaterial({ color: 0xd6cfb2, side: THREE.BackSide })
+    );
+    hallShell.position.set(DOOR.x + 0.5, 1.45, roomD / 2 + 0.852);
+    scene.add(hallShell);
+    const hallFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.0, 1.7),
+      new THREE.MeshLambertMaterial({ color: 0x9c9a8a })
+    );
+    hallFloor.rotation.x = -Math.PI / 2;
+    hallFloor.position.set(DOOR.x + 0.5, 0.003, roomD / 2 + 0.852);
+    scene.add(hallFloor);
+    const lockerTex = makeCanvasTexture(512, 256, (ctx, w, h) => {
+      const n = 8, lw = w / n;
+      for (let i = 0; i < n; i++) {
+        ctx.fillStyle = i % 2 ? '#5d8791' : '#668f99';
+        ctx.fillRect(i * lw, 0, lw, h);
+        ctx.strokeStyle = 'rgba(20,40,48,0.55)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(i * lw + 1.5, 1.5, lw - 3, h - 3);
+        ctx.fillStyle = 'rgba(20,40,48,0.45)';             // vent slots
+        for (let v = 0; v < 4; v++) ctx.fillRect(i * lw + lw * 0.25, 22 + v * 10, lw * 0.5, 4);
+        ctx.fillStyle = '#d8d2c0';                         // handle
+        ctx.fillRect(i * lw + lw * 0.74, h * 0.5, lw * 0.1, 26);
+      }
+    });
+    const lockerSideMat = new THREE.MeshLambertMaterial({ color: 0x4f7882 });
+    const lockers = new THREE.Mesh(
+      new THREE.BoxGeometry(2.8, 1.85, 0.3),
+      [lockerSideMat, lockerSideMat, lockerSideMat, lockerSideMat, lockerSideMat,
+       new THREE.MeshLambertMaterial({ map: lockerTex })]   // -z = the face toward the classroom
+    );
+    lockers.position.set(DOOR.x + 0.55, 0.925, roomD / 2 + 1.7 - 0.15);
+    scene.add(lockers);
+
+    // ---- EXIT sign over the door — self-lit, so it glows in every lighting preset ----
+    const exitTex = makeCanvasTexture(256, 112, (ctx, w, h) => {
+      ctx.fillStyle = '#b3261e';
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = '#fff4e2';
+      ctx.lineWidth = 5;
+      ctx.strokeRect(8, 8, w - 16, h - 16);
+      ctx.fillStyle = '#fff4e2';
+      ctx.font = 'bold 76px Arial, Helvetica, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('EXIT', w / 2, h / 2 + 5);
+      ctx.textAlign = 'left';
+    });
+    const exitCaseMat = new THREE.MeshLambertMaterial({ color: 0xd9d4c4 });
+    const exitSign = new THREE.Mesh(
+      new THREE.BoxGeometry(0.44, 0.19, 0.06),
+      [exitCaseMat, exitCaseMat, exitCaseMat, exitCaseMat, exitCaseMat, new THREE.MeshBasicMaterial({ map: exitTex, toneMapped: false })]
+    );
+    exitSign.position.set(0, DOOR.h + DOOR.jamb + 0.17, -0.031);
+    doorGroup.add(exitSign);
+
+    // ---- light switch on the latch side of the door ----
+    const switchPlate = new THREE.Mesh(
+      new THREE.BoxGeometry(0.075, 0.115, 0.012),
+      new THREE.MeshLambertMaterial({ color: 0xf2ecd8 })
+    );
+    switchPlate.position.set(-(DOOR.w / 2 + DOOR.jamb + 0.2), 1.22, -0.006);
+    doorGroup.add(switchPlate);
+    const switchToggle = new THREE.Mesh(
+      new THREE.BoxGeometry(0.014, 0.034, 0.02),
+      new THREE.MeshLambertMaterial({ color: 0xd8d0b8 })
+    );
+    switchToggle.position.set(switchPlate.position.x, 1.228, -0.018);
+    switchToggle.rotation.x = 0.5;
+    doorGroup.add(switchToggle);
+
+    // ---- coat pegs and a cubby bench beside the door ----
+    // (wallZ = the back wall; everything on it faces -z, into the room)
+    const wallZ = roomD / 2;
+    const cubbyX = 3.02;
+    const pegRail = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.09, 0.024), shelfMat);
+    pegRail.position.set(cubbyX, 1.56, wallZ - 0.012);
+    scene.add(pegRail);
+    const pegGeo = new THREE.CylinderGeometry(0.011, 0.011, 0.085, 8);
+    pegGeo.rotateX(Math.PI / 2);
+    const pegXs = [-0.4, -0.2, 0, 0.2, 0.4].map(o => cubbyX + o);
+    pegXs.forEach(px => {
+      const peg = new THREE.Mesh(pegGeo, chairLegMat);
+      peg.position.set(px, 1.565, wallZ - 0.06);
+      peg.rotation.x = -0.25;   // tip a little upward
+      scene.add(peg);
+    });
+    // a jacket on one peg: tapered body, two sleeves, a hood
+    const jacket = new THREE.Group();
+    jacket.position.set(pegXs[1], 1.56, wallZ - 0.085);
+    scene.add(jacket);
+    const jacketMat = new THREE.MeshLambertMaterial({ color: 0xd9a441, flatShading: true });
+    const jacketDarkMat = new THREE.MeshLambertMaterial({ color: 0xa87a2a, flatShading: true });
+    const jacketBody = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.19, 0.56, 8), jacketMat);
+    jacketBody.scale.z = 0.34;
+    jacketBody.position.y = -0.33;
+    jacket.add(jacketBody);
+    const jacketHem = new THREE.Mesh(new THREE.CylinderGeometry(0.192, 0.192, 0.05, 8), jacketDarkMat);
+    jacketHem.scale.z = 0.35;
+    jacketHem.position.y = -0.6;
+    jacket.add(jacketHem);
+    [-1, 1].forEach(s => {
+      const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.05, 0.5, 6), jacketMat);
+      sleeve.scale.z = 0.75;
+      sleeve.position.set(s * 0.19, -0.34, 0);
+      sleeve.rotation.z = s * 0.1;
+      jacket.add(sleeve);
+    });
+    const jacketHood = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), jacketDarkMat);
+    jacketHood.scale.set(1.2, 0.8, 0.55);
+    jacketHood.position.y = -0.03;
+    jacket.add(jacketHood);
+    // a backpack hanging by its loop on another peg
+    const hungBag = new THREE.Group();
+    hungBag.position.set(pegXs[3], 1.56, wallZ - 0.1);
+    scene.add(hungBag);
+    const hungBagMat = new THREE.MeshLambertMaterial({ color: 0xb85450 });
+    const hungBagDark = new THREE.MeshLambertMaterial({ color: 0x7c3431 });
+    const hungBody = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.36, 0.13), hungBagMat);
+    hungBody.position.y = -0.27;
+    hungBag.add(hungBody);
+    const hungPocket = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.035), hungBagDark);
+    hungPocket.position.set(0, -0.33, -0.08);
+    hungBag.add(hungPocket);
+    const hungLoop = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.009, 6, 12), hungBagDark);
+    hungLoop.position.y = -0.045;
+    hungBag.add(hungLoop);
+    // cubby bench underneath: three open compartments with a ball, a lunchbox, a pair of boots
+    const cubby = new THREE.Group();
+    cubby.position.set(cubbyX, 0, wallZ - 0.17);
+    scene.add(cubby);
+    [[0, 0.455, 0, 1.04, 0.03, 0.34], [0, 0.035, 0, 1.04, 0.03, 0.34],
+     [-0.505, 0.235, 0, 0.03, 0.47, 0.34], [0.505, 0.235, 0, 0.03, 0.47, 0.34],
+     [-0.168, 0.245, 0, 0.022, 0.39, 0.32], [0.168, 0.245, 0, 0.022, 0.39, 0.32],
+     [0, 0.245, 0.16, 1.0, 0.42, 0.012]].forEach(([bx, by, bz, bw, bh, bd], i) => {
+      const board = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), shelfMat);
+      board.position.set(bx, by, bz);
+      if (i === 0) board.castShadow = true;
+      cubby.add(board);
+    });
+    const cubbyBall = new THREE.Mesh(
+      new THREE.SphereGeometry(0.115, 14, 10),
+      new THREE.MeshLambertMaterial({ color: 0xc2583a })
+    );
+    cubbyBall.position.set(-0.335, 0.165, -0.01);
+    cubby.add(cubbyBall);
+    const lunchMat = new THREE.MeshLambertMaterial({ color: 0x41b3a3 });
+    const lunchbox = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.15, 0.13), lunchMat);
+    lunchbox.position.set(0, 0.125, -0.03);
+    lunchbox.rotation.y = 0.15;
+    cubby.add(lunchbox);
+    const lunchHandle = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.008, 6, 12, Math.PI), chairLegMat);
+    lunchHandle.position.set(0, 0.2, -0.03);
+    lunchHandle.rotation.y = 0.15;
+    cubby.add(lunchHandle);
+    const bootMat = new THREE.MeshLambertMaterial({ color: 0xe7b10a });
+    [-0.05, 0.06].forEach((bx, i) => {
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.038, 0.2, 10), bootMat);
+      shaft.position.set(0.335 + bx, 0.15, 0.03);
+      cubby.add(shaft);
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.055, 0.15), bootMat);
+      foot.position.set(0.335 + bx, 0.0775, -0.02);
+      foot.rotation.y = i ? -0.12 : 0.05;
+      cubby.add(foot);
+    });
+
+    // ---- cork board of student work, centred on the back wall (directly behind the seat) ----
+    const corkTex = makeCanvasTexture(1024, 512, (ctx, w, h) => {
+      ctx.fillStyle = '#c69c64';
+      ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 2600; i++) {
+        ctx.fillStyle = `rgba(${Math.random() < 0.5 ? '120,80,40' : '235,200,150'},${0.1 + Math.random() * 0.2})`;
+        ctx.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 3, 1 + Math.random() * 2);
+      }
+      // header: one cut-out letter per coloured card
+      const header = 'OUR BEST WORK';
+      const cardCols = ['#e9a15f', '#6ba3a5', '#c26b5a', '#7b9b5a', '#b98cc2', '#e8c15a'];
+      const cs = 50, gap = 6, startX = (w - header.length * (cs + gap)) / 2;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      header.split('').forEach((ch, i) => {
+        if (ch === ' ') return;
+        ctx.save();
+        ctx.translate(startX + i * (cs + gap) + cs / 2, 52);
+        ctx.rotate(((i % 2) ? 1 : -1) * 0.06);
+        ctx.fillStyle = 'rgba(60,35,15,0.25)';
+        ctx.fillRect(-cs / 2 + 3, -cs / 2 + 4, cs, cs);
+        ctx.fillStyle = cardCols[i % cardCols.length];
+        ctx.fillRect(-cs / 2, -cs / 2, cs, cs);
+        ctx.fillStyle = '#fff8ea';
+        ctx.font = 'bold 44px "Patrick Hand", cursive';
+        ctx.fillText(ch, 0, 3);
+        ctx.restore();
+      });
+      // a sheet of paper pinned up, a little crooked, with a drawing on it
+      const pinCols = ['#c0392b', '#2471a3', '#e7b10a', '#1e8449'];
+      let pinN = 0;
+      const sheet = (cx, cy, sw, sh, tilt, color, draw) => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(tilt);
+        ctx.fillStyle = 'rgba(60,35,15,0.28)';
+        ctx.fillRect(-sw / 2 + 4, -sh / 2 + 5, sw, sh);
+        ctx.fillStyle = color;
+        ctx.fillRect(-sw / 2, -sh / 2, sw, sh);
+        ctx.save();
+        draw(sw, sh);
+        ctx.restore();
+        ctx.fillStyle = pinCols[pinN++ % pinCols.length];
+        ctx.beginPath(); ctx.arc(0, -sh / 2 + 11, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.beginPath(); ctx.arc(-2, -sh / 2 + 9, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      };
+      const scribble = (x0, y, len) => {      // a line of pretend handwriting
+        ctx.beginPath();
+        ctx.moveTo(x0, y);
+        for (let x = x0; x < x0 + len; x += 6) ctx.lineTo(x, y + (Math.random() - 0.5) * 4);
+        ctx.stroke();
+      };
+      // row 1
+      sheet(112, 205, 132, 172, -0.05, '#fdfbf0', (sw, sh) => {       // marked worksheet
+        ctx.strokeStyle = 'rgba(40,50,90,0.55)'; ctx.lineWidth = 2;
+        for (let i = 0; i < 7; i++) scribble(-sw / 2 + 14, -sh / 2 + 50 + i * 16, sw - 28 - (i % 3) * 18);
+        ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(sw / 2 - 30, -sh / 2 + 28, 19, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#c0392b'; ctx.font = 'bold 24px "Patrick Hand", cursive';
+        ctx.fillText('A+', sw / 2 - 30, -sh / 2 + 30);
+      });
+      sheet(305, 198, 196, 144, 0.04, '#fffdf5', (sw, sh) => {        // house and sun
+        ctx.fillStyle = '#f2c230';
+        ctx.beginPath(); ctx.arc(-sw / 2 + 38, -sh / 2 + 36, 17, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#f2c230'; ctx.lineWidth = 3;
+        for (let a = 0; a < 8; a++) {
+          const an = a * Math.PI / 4;
+          ctx.beginPath();
+          ctx.moveTo(-sw / 2 + 38 + Math.cos(an) * 22, -sh / 2 + 36 + Math.sin(an) * 22);
+          ctx.lineTo(-sw / 2 + 38 + Math.cos(an) * 31, -sh / 2 + 36 + Math.sin(an) * 31);
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#7b9b5a'; ctx.fillRect(-sw / 2, sh / 2 - 24, sw, 24);
+        ctx.fillStyle = '#c26b5a'; ctx.fillRect(4, sh / 2 - 76, 62, 54);
+        ctx.fillStyle = '#7a4a2a';
+        ctx.beginPath(); ctx.moveTo(-4, sh / 2 - 76); ctx.lineTo(35, sh / 2 - 112); ctx.lineTo(74, sh / 2 - 76); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#4a2e14'; ctx.fillRect(28, sh / 2 - 50, 15, 28);
+        ctx.fillStyle = '#fff3c0'; ctx.fillRect(48, sh / 2 - 64, 12, 12);
+      });
+      sheet(520, 206, 168, 150, -0.03, '#fdf6dc', (sw, sh) => {       // star chart
+        ctx.strokeStyle = 'rgba(60,40,20,0.35)'; ctx.lineWidth = 1.5;
+        for (let r = 0; r <= 4; r++) { ctx.beginPath(); ctx.moveTo(-sw / 2 + 12, -sh / 2 + 32 + r * 26); ctx.lineTo(sw / 2 - 12, -sh / 2 + 32 + r * 26); ctx.stroke(); }
+        ctx.beginPath(); ctx.moveTo(-sw / 2 + 56, -sh / 2 + 32); ctx.lineTo(-sw / 2 + 56, -sh / 2 + 136); ctx.stroke();
+        ctx.strokeStyle = 'rgba(40,50,90,0.5)'; ctx.lineWidth = 2;
+        ctx.fillStyle = '#e7a80a'; ctx.font = '20px "Patrick Hand", cursive';
+        [4, 2, 5, 3].forEach((n, r) => {
+          scribble(-sw / 2 + 16, -sh / 2 + 46 + r * 26, 32);
+          for (let s = 0; s < n; s++) ctx.fillText('★', -sw / 2 + 70 + s * 19, -sh / 2 + 46 + r * 26);
+        });
+      });
+      sheet(733, 200, 196, 144, 0.05, '#cfe3ee', (sw, sh) => {        // rainbow
+        ['#c0392b', '#e9a15f', '#e8c15a', '#7b9b5a', '#5a8fb8', '#8a6aa8'].forEach((col, i) => {
+          ctx.strokeStyle = col; ctx.lineWidth = 9;
+          ctx.beginPath(); ctx.arc(0, sh / 2 - 22, 78 - i * 9, Math.PI, 0); ctx.stroke();
+        });
+        ctx.fillStyle = '#ffffff';
+        [[-76, sh / 2 - 26], [76, sh / 2 - 26]].forEach(([x, y]) => {
+          ctx.beginPath(); ctx.arc(x - 12, y, 13, 0, Math.PI * 2); ctx.arc(x + 4, y - 7, 16, 0, Math.PI * 2); ctx.arc(x + 18, y, 12, 0, Math.PI * 2); ctx.fill();
+        });
+      });
+      sheet(922, 208, 124, 164, -0.04, '#fdfbf0', (sw, sh) => {       // a page of writing, ticked
+        ctx.strokeStyle = 'rgba(90,130,180,0.4)'; ctx.lineWidth = 1;
+        for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.moveTo(-sw / 2 + 8, -sh / 2 + 34 + i * 16); ctx.lineTo(sw / 2 - 8, -sh / 2 + 34 + i * 16); ctx.stroke(); }
+        ctx.strokeStyle = 'rgba(30,30,40,0.6)'; ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) scribble(-sw / 2 + 12, -sh / 2 + 30 + i * 16, sw - 26 - (i % 2) * 22);
+        ctx.strokeStyle = '#1e8449'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(14, sh / 2 - 30); ctx.lineTo(24, sh / 2 - 18); ctx.lineTo(46, sh / 2 - 46); ctx.stroke();
+      });
+      // row 2
+      sheet(178, 400, 190, 138, 0.03, '#fffdf5', (sw, sh) => {        // bar chart
+        ctx.strokeStyle = 'rgba(30,30,40,0.7)'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(-sw / 2 + 26, -sh / 2 + 26); ctx.lineTo(-sw / 2 + 26, sh / 2 - 20); ctx.lineTo(sw / 2 - 16, sh / 2 - 20); ctx.stroke();
+        [[46, '#c26b5a'], [74, '#6ba3a5'], [58, '#e8c15a'], [88, '#7b9b5a'], [36, '#b98cc2']].forEach(([bh, col], i) => {
+          ctx.fillStyle = col;
+          ctx.fillRect(-sw / 2 + 38 + i * 28, sh / 2 - 21 - bh, 20, bh);
+        });
+      });
+      sheet(395, 404, 138, 150, -0.06, '#f6efd6', (sw, sh) => {       // a tree
+        ctx.fillStyle = '#7a4a2a'; ctx.fillRect(-9, 0, 18, sh / 2 - 16);
+        ctx.fillStyle = '#6ea050';
+        ctx.beginPath(); ctx.arc(0, -14, 36, 0, Math.PI * 2); ctx.arc(-26, 6, 24, 0, Math.PI * 2); ctx.arc(26, 6, 24, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#c0392b';
+        [[-14, -22], [12, -8], [-26, 8], [24, 12], [2, -34]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill(); });
+        ctx.fillStyle = '#7b9b5a'; ctx.fillRect(-sw / 2, sh / 2 - 16, sw, 16);
+      });
+      sheet(612, 398, 204, 140, 0.04, '#22304e', (sw, sh) => {        // the planets, on dark paper
+        ctx.fillStyle = '#f0c040';
+        ctx.beginPath(); ctx.arc(-sw / 2 + 30, 6, 22, 0, Math.PI * 2); ctx.fill();
+        [[-34, 7, '#9a8a7a'], [-10, 10, '#d8a860'], [18, 11, '#5a8fd0'], [44, 8, '#c05a3a'], [76, 16, '#c89858']].forEach(([x, r, col]) => {
+          ctx.fillStyle = col;
+          ctx.beginPath(); ctx.arc(x, 6, r, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        for (let i = 0; i < 16; i++) ctx.fillRect(-sw / 2 + 10 + Math.random() * (sw - 20), -sh / 2 + 22 + Math.random() * (sh - 34), 2, 2);
+      });
+      sheet(838, 402, 118, 118, -0.08, '#f4e27a', (sw, sh) => {       // a sticky note with a smiley
+        ctx.strokeStyle = 'rgba(40,30,20,0.75)'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0, 8, 30, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 10, 17, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+        ctx.fillStyle = 'rgba(40,30,20,0.8)';
+        ctx.beginPath(); ctx.arc(-10, -1, 3.5, 0, Math.PI * 2); ctx.arc(10, -1, 3.5, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+    });
+    const corkX = -0.55, corkY = 1.82;
+    const corkFrame = new THREE.Mesh(new THREE.BoxGeometry(2.44, 1.26, 0.05), mullionMat);
+    corkFrame.position.set(corkX, corkY, wallZ - 0.025);
+    scene.add(corkFrame);
+    const corkBoard = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.32, 1.14),
+      new THREE.MeshLambertMaterial({ map: corkTex })
+    );
+    corkBoard.position.set(corkX, corkY, wallZ - 0.052);
+    corkBoard.rotation.y = Math.PI;
+    scene.add(corkBoard);
+
+    // ---- pull-down world map on the back wall, window side ----
+    const mapTex = makeCanvasTexture(1024, 680, (ctx, w, h) => {
+      ctx.fillStyle = '#f1e7c9';
+      ctx.fillRect(0, 0, w, h);
+      const mx = 34, my = 34, mw = w - 68, mh = h - 68;
+      ctx.fillStyle = '#9cc7d4';
+      ctx.fillRect(mx, my, mw, mh);
+      const P = (lon, lat) => [mx + (lon + 180) / 360 * mw, my + (90 - lat) / 180 * mh];
+      // graticule
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1.5;
+      for (let lon = -150; lon <= 150; lon += 30) {
+        const [x] = P(lon, 0);
+        ctx.beginPath(); ctx.moveTo(x, my); ctx.lineTo(x, my + mh); ctx.stroke();
+      }
+      for (let lat = -60; lat <= 60; lat += 30) {
+        const [, y] = P(0, lat);
+        ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(mx + mw, y); ctx.stroke();
+      }
+      // continents, schoolroom-map style: one flat colour each
+      const land = (color, pts) => {
+        ctx.beginPath();
+        pts.forEach(([lon, lat], i) => {
+          const [x, y] = P(lon, lat);
+          if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        });
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(70,50,30,0.45)';
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+      };
+      land('#e6c66e', [[-165, 65], [-140, 70], [-100, 72], [-80, 66], [-60, 55], [-66, 45], [-76, 35], [-81, 26], [-90, 29], [-97, 20], [-87, 15], [-80, 9], [-92, 15], [-105, 22], [-115, 32], [-125, 45], [-135, 57], [-160, 57]]);
+      land('#f4f1e6', [[-52, 60], [-22, 70], [-25, 82], [-58, 80]]);
+      land('#8fbf7a', [[-80, 10], [-62, 10], [-50, 0], [-36, -7], [-40, -20], [-55, -33], [-65, -45], [-72, -53], [-74, -40], [-70, -18], [-80, -5]]);
+      land('#e39a5a', [[-17, 15], [-10, 30], [10, 36], [30, 31], [35, 25], [43, 11], [51, 11], [40, -5], [38, -18], [30, -32], [20, -35], [13, -20], [10, 0], [-5, 5], [-15, 10]]);
+      land('#c79ac4', [[-10, 37], [-9, 43], [0, 48], [-4, 57], [8, 57], [12, 65], [25, 70], [40, 67], [40, 48], [28, 42], [22, 38], [12, 44], [3, 42]]);
+      land('#d98372', [[40, 67], [70, 72], [105, 77], [140, 72], [170, 68], [178, 64], [160, 58], [142, 52], [135, 38], [122, 30], [120, 22], [108, 18], [105, 10], [100, 14], [95, 16], [90, 22], [80, 10], [73, 20], [60, 25], [50, 28], [45, 15], [35, 30], [28, 42], [40, 48]]);
+      land('#e6c66e', [[114, -22], [130, -12], [142, -11], [153, -27], [147, -38], [135, -35], [117, -34]]);
+      land('#f4f1e6', [[-180, -72], [-120, -74], [-60, -68], [0, -70], [60, -67], [120, -68], [180, -72], [180, -90], [-180, -90]]);
+      // neat line + compass star
+      ctx.strokeStyle = 'rgba(70,50,30,0.7)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(mx, my, mw, mh);
+      const [sx, sy] = P(-150, -40);
+      ctx.fillStyle = 'rgba(70,50,30,0.75)';
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const r = i % 2 ? 9 : 30, a = i * Math.PI / 4 - Math.PI / 2;
+        ctx.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r);
+      }
+      ctx.closePath();
+      ctx.fill();
+    });
+    const mapX = -3.05, mapW = 1.5, mapH = 1.0, mapTop = 2.5;
+    const wallMap = new THREE.Mesh(
+      new THREE.PlaneGeometry(mapW, mapH),
+      new THREE.MeshLambertMaterial({ map: mapTex })
+    );
+    wallMap.position.set(mapX, mapTop - mapH / 2, wallZ - 0.035);
+    wallMap.rotation.y = Math.PI;
+    scene.add(wallMap);
+    // the roller it pulls down from, its two brackets, the weighted slat and the pull ring
+    const mapRoller = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, mapW + 0.1, 10), mullionMat);
+    mapRoller.rotation.z = Math.PI / 2;
+    mapRoller.position.set(mapX, mapTop + 0.02, wallZ - 0.05);
+    scene.add(mapRoller);
+    [-1, 1].forEach(s => {
+      const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.1, 0.09), doorTrimMat);
+      bracket.position.set(mapX + s * (mapW / 2 + 0.065), mapTop + 0.02, wallZ - 0.045);
+      scene.add(bracket);
+    });
+    const mapSlat = new THREE.Mesh(new THREE.BoxGeometry(mapW + 0.02, 0.035, 0.02), mullionMat);
+    mapSlat.position.set(mapX, mapTop - mapH, wallZ - 0.04);
+    scene.add(mapSlat);
+    const mapCord = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.1, 5), cordMat);
+    mapCord.position.set(mapX, mapTop - mapH - 0.065, wallZ - 0.04);
+    scene.add(mapCord);
+    const mapRing = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.005, 6, 14), doorMetalMat);
+    mapRing.position.set(mapX, mapTop - mapH - 0.135, wallZ - 0.04);
+    scene.add(mapRing);
+
+    // ---- wall-mounted pencil sharpener, between the map and the cork board ----
+    const sharpener = new THREE.Group();
+    sharpener.position.set(-2.0, 1.15, wallZ);
+    scene.add(sharpener);
+    const sharpBodyMat = new THREE.MeshLambertMaterial({ color: 0x5f7a72 });
+    const sharpPlate = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.012), doorTrimMat);
+    sharpPlate.position.z = -0.006;
+    sharpener.add(sharpPlate);
+    const sharpBody = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.085, 0.07), sharpBodyMat);
+    sharpBody.position.z = -0.047;
+    sharpener.add(sharpBody);
+    const sharpBin = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.07, 12), doorMetalMat);
+    sharpBin.rotation.x = Math.PI / 2;
+    sharpBin.position.z = -0.115;
+    sharpener.add(sharpBin);
+    // crank on the side that faces the seat
+    const sharpArm = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.075, 0.014), doorMetalMat);
+    sharpArm.position.set(0.045, -0.02, -0.05);
+    sharpArm.rotation.x = 0.5;
+    sharpener.add(sharpArm);
+    const sharpKnob = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.035, 8), chairLegMat);
+    sharpKnob.rotation.z = Math.PI / 2;
+    sharpKnob.position.set(0.065, -0.05, -0.068);
+    sharpener.add(sharpKnob);
+
+    // ---- PA speaker box high on the back wall, above the cork board ----
+    const paBox = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.3, 0.11), mullionMat);
+    paBox.position.set(corkX, 2.98, wallZ - 0.055);
+    scene.add(paBox);
+    const paGrille = new THREE.Mesh(
+      new THREE.CircleGeometry(0.11, 20),
+      new THREE.MeshLambertMaterial({ color: 0x2e261c })
+    );
+    paGrille.position.set(corkX, 2.98, wallZ - 0.112);
+    paGrille.rotation.y = Math.PI;
+    scene.add(paGrille);
+    [-0.04, 0, 0.04].forEach(oy => {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.008, 0.006), mullionMat);
+      bar.position.set(corkX, 2.98 + oy, wallZ - 0.115);
+      scene.add(bar);
+    });
+
     // ---- dust motes (cheap sprites) ----
     const dustGroup = new THREE.Group();
     const dustGeo = new THREE.BufferGeometry();
@@ -2451,8 +3079,11 @@ window.Classroom = (function () {
 
     // ---- outline highlight: pulsing backside-glow on hover ----
     let hoverGlow = null;
+    let hoverObj = null;
     let hoverPulseStart = 0;
+    const _hp = new THREE.Vector3(), _hq = new THREE.Quaternion(), _hs = new THREE.Vector3();
     function setHover(obj) {
+      hoverObj = obj || null;
       if (hoverGlow) {
         scene.remove(hoverGlow);
         hoverGlow.traverse(child => {
@@ -2466,7 +3097,8 @@ window.Classroom = (function () {
       const glowGroup = new THREE.Group();
 
       // Draw the same edges 3× at slightly different scales — simulates a thick bright border
-      const edgeGeo = new THREE.EdgesGeometry(obj.geometry, 12);
+      // (objects can supply userData.glowGeo when their own mesh makes a poor outline)
+      const edgeGeo = new THREE.EdgesGeometry(obj.userData.glowGeo || obj.geometry, 12);
       [1.0, 1.012, 1.024].forEach(s => {
         const lines = new THREE.LineSegments(edgeGeo,
           new THREE.LineBasicMaterial({
@@ -2504,23 +3136,32 @@ window.Classroom = (function () {
       laptopScreenMat: laptopScreen.material,
       paperMat: null,
       textbookMats: tbCover.material,
-      rayMat, rayMats, ambient, key, fill, hemi, boardSpot, pointLights, dustMat, scene,
+      rayMat, rayMats, ambient, key, fill, hemi, backFill, boardSpot, pointLights, dustMat, scene,
       rayBase: 0.08, dustBase: 0.32,
       interactive,
       setHover,
       accentHex: opts.accentHex,
       introActive: false, introStart: 0,
+      pointerEnv: { pointerNX: 0, pointerNY: 0 },
+      sideDesk,
+      // things the camera can turn toward that are not clickable themselves
+      anchors: { whiteboard },
+      robotPlay: (move) => (sideDesk ? sideDesk.robotPlay(move) : null),
+      rabbitHop: () => { if (sideDesk) sideDesk.rabbitHop(); },
     };
 
     // entrance: walk in through the classroom door, cross the room, take your seat
     const CAM_HOME = new THREE.Vector3(0, 1.65, 0.8);
+    // (the door is on the back wall at x = DOOR.x, standing ajar; the walk starts just past its
+    // open edge and goes down the aisle between the back-centre and back-right desks)
     const CAM_PATH = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(2.9, 1.74, 3.3),   // just inside the door, standing
-      new THREE.Vector3(2.15, 1.72, 2.55), // walking past the back desks
-      new THREE.Vector3(1.05, 1.70, 1.75),
+      new THREE.Vector3(1.32, 1.74, 3.42), // just inside the door, standing
+      new THREE.Vector3(1.2, 1.72, 2.65),  // walking past the back desks
+      new THREE.Vector3(0.95, 1.70, 1.8),
       new THREE.Vector3(0.3, 1.67, 1.2),   // slowing beside your desk
       CAM_HOME.clone(),                    // seated
     ]);
+    state.camHome = CAM_HOME;
     state.playIntro = function () {
       camera.position.copy(CAM_PATH.getPoint(0));
       state.introActive = true;
@@ -2528,8 +3169,19 @@ window.Classroom = (function () {
     };
 
     // resize
+    // The lens is 65° tall. On narrow or portrait screens that leaves only a sliver of
+    // the room, so widen it until ~62° is visible side to side (capped so it never fish-eyes).
+    function fitFov() {
+      const aspect = window.innerWidth / window.innerHeight;
+      const minH = THREE.MathUtils.degToRad(62);
+      const need = 2 * Math.atan(Math.tan(minH / 2) / aspect);
+      camera.fov = THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(need), 65, 96);
+    }
+    fitFov();
+    camera.updateProjectionMatrix();
     function onResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
+      fitFov();
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight, false);
     }
@@ -2579,6 +3231,9 @@ window.Classroom = (function () {
         dust.geometry.attributes.position.needsUpdate = true;
       }
       dust.visible = state.dust;
+
+      // the rabbit hops, the robot practises
+      if (sideDesk) sideDesk.update(tNow, dt, state.pointerEnv);
 
       // the globe turns, slowly
       globe.rotation.y += dt * 0.12;
@@ -2632,6 +3287,12 @@ window.Classroom = (function () {
       secPivot.rotation.z = -(s / 60) * Math.PI * 2;
 
       // animate hover glow — quick fade-in, then a gentle pulse
+      if (hoverGlow && hoverObj) {
+        // keep the outline glued to things that move (the rabbit hops)
+        hoverObj.updateWorldMatrix(true, false);
+        hoverObj.matrixWorld.decompose(_hp, _hq, _hs);
+        hoverGlow.position.copy(_hp); hoverGlow.quaternion.copy(_hq); hoverGlow.scale.copy(_hs);
+      }
       if (hoverGlow) {
         const age = tNow - hoverPulseStart;
         const fadeIn = Math.min(1, age / 160);
@@ -2825,21 +3486,27 @@ window.Classroom = (function () {
 
       // also adjust lighting
       const presets = {
+        // back / back_i = the level bounce light that reaches the back wall and the door
         morning:   { amb: 0xfff4dc, amb_i: 0.42, key: 0xffc890, key_i: 1.05, fill: 0xaec9e0, fill_i: 0.30,
-                     hemi_i: 0.40, pts: 0.30, spot: 0.45, ray: 0.08, dust: 0.32, bg: '#2b2d1f' },
+                     hemi_i: 0.40, pts: 0.30, spot: 0.45, ray: 0.08, dust: 0.32, bg: '#2b2d1f',
+                     back: 0xffe8c4, back_i: 0.32 },
         afternoon: { amb: 0xfff6e0, amb_i: 0.45, key: 0xffd8a0, key_i: 1.2,  fill: 0xaec9e0, fill_i: 0.30,
-                     hemi_i: 0.40, pts: 0.25, spot: 0.50, ray: 0.10, dust: 0.32, bg: '#2a2d1d' },
+                     hemi_i: 0.40, pts: 0.25, spot: 0.50, ray: 0.10, dust: 0.32, bg: '#2a2d1d',
+                     back: 0xffeccc, back_i: 0.34 },
         dusk:      { amb: 0xf0c0a0, amb_i: 0.34, key: 0xff8a60, key_i: 0.85, fill: 0xc8a8d8, fill_i: 0.22,
-                     hemi_i: 0.32, pts: 0.65, spot: 0.70, ray: 0.12, dust: 0.26, bg: '#231a22' },
+                     hemi_i: 0.32, pts: 0.65, spot: 0.70, ray: 0.12, dust: 0.26, bg: '#231a22',
+                     back: 0xffc8a0, back_i: 0.30 },
         // night = evening study session: lights ON, warm and cozy, moonlight through the window
         night:     { amb: 0xffe2b8, amb_i: 0.34, key: 0x96a8d8, key_i: 0.30, fill: 0xffd8a8, fill_i: 0.28,
-                     hemi_i: 0.30, pts: 1.05, spot: 0.95, ray: 0.03, dust: 0.14, bg: '#16120c' },
+                     hemi_i: 0.30, pts: 1.05, spot: 0.95, ray: 0.03, dust: 0.14, bg: '#16120c',
+                     back: 0xffdcae, back_i: 0.30 },
       };
       const p = presets[mode] || presets.afternoon;
       state.ambient.color.set(p.amb); state.ambient.intensity = p.amb_i;
       state.key.color.set(p.key); state.key.intensity = p.key_i;
       state.fill.color.set(p.fill); state.fill.intensity = p.fill_i;
       state.hemi.intensity = p.hemi_i;
+      if (state.backFill) { state.backFill.color.set(p.back); state.backFill.intensity = p.back_i; }
       if (state.boardSpot) state.boardSpot.intensity = p.spot;
       (state.pointLights || []).forEach((pl, i) => { pl.intensity = p.pts * (i < 3 ? 1 : 0.7); });
       state.rayBase = p.ray;
@@ -2854,6 +3521,7 @@ window.Classroom = (function () {
       state.wbTex.image = newWB.image; state.wbTex.needsUpdate = true;
       const lb = state.interactive.find(o => o.userData.hit === 'leftboard');
       if (lb) lb.material.map = nameBoardTexture(accentHex);
+      if (state.sideDesk && state.sideDesk.setAccent) state.sideDesk.setAccent(accentHex);
       // right contact display is baked cards — no accent-driven texture to update
       const bl = state.interactive.find(o => o.userData.hit === 'bulletin');
       if (bl) bl.material.map = bulletinTexture(accentHex);

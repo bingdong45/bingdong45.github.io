@@ -1,243 +1,243 @@
 # Editing the site's words — a content map
 
-Every piece of text a visitor can see, and exactly which file and line to change it in.
+Every piece of text a visitor can see, and which file to change it in.
 
-## The one rule that saves you time
+## The site in one picture
 
-Text lives in **three** places, in descending order of how often you'll touch them:
+```
+bingyixuan.com/            first page: pick "The Classroom" or "The Standard CV"
+├── (same page) #room      the 3D classroom            index.html + content.js + scene.js + sidedesk.js + app.js
+└── old/                   the standard / professional CV page   old/index.html (plain HTML)
+```
+
+**House rule for now (Oct 2026):** the site stays light. It lists what exists — labs, project
+names, roles — with **no descriptions**, it leaves out work that is still in progress, and the
+CV itself is **available on request** rather than posted. Nothing on the site links to a CV file.
+
+**There are two copies of your CV text**: the classroom reads `content.js`; the standard CV is
+hand-written HTML in `old/index.html`. When a fact changes (new paper, new job), change it in
+**both**.
 
 | File | What's in it | How hard |
 | --- | --- | --- |
-| **`content.js`** | ~95% of the words. Every panel that opens when you click something. | Easy — plain text in quotes |
-| **`index.html`** | The intro screen, the on-screen buttons/HUD, the plain-text CV headings | Easy — plain HTML |
-| **`scene.js`** | Text *painted onto the 3D objects themselves* — posters, pennants, book spine, laptop screen | Harder — buried in drawing code |
+| **`content.js`** | Every panel in the classroom. ~95% of the classroom's words. | Easy — plain text in quotes |
+| **`old/index.html`** | The whole standard CV page. | Easy — plain HTML |
+| **`index.html`** | The first page (the two choices) and the on-screen buttons | Easy — plain HTML |
+| **`scene.js`** | Text *painted onto 3D objects* — posters, pennants, book covers, laptop screen | Harder — buried in drawing code |
+| **`sidedesk.js`** | The side-projects desk: the rabbit, the robot, the "SIDE PROJECTS" sign | Harder — 3D code |
+| **`app.js`** | Behaviour: looking around, the dots, the bottom bar, the panels, the game | Only for behaviour changes |
 
-**If you can click it and a panel slides open, the words are in `content.js`.**
-That's the file you want 9 times out of 10.
+**If a panel slides open, the words are in `content.js`.** That's the file you want 9 times out of 10.
 
 ---
 
-# Part 1 — `content.js` (the panels)
+# Part 1 — `content.js` (the classroom panels)
 
-One big `window.CONTENT = { … }` object. Each top-level key is one clickable thing in
-the room. Edit the text between the quotes. Keep the quotes, commas, and brackets.
+One big `window.CONTENT = { … }` object. Each top-level key is one panel. Edit the text
+between the quotes. Keep the quotes, commas, and brackets.
 
-Every block shares the same three opening fields:
+Every block starts with the same three fields:
 
 - `kicker` — the small uppercase label at the top of the panel
 - `title` — the big heading
 - `sub` — the one-line description under the heading
 
-Then each has its own body content.
+### How a visitor gets to a panel
 
-### The blocks, and what you click to see them
+Clicking anything in the room is two steps: the **first click walks you over** to it and shows
+a small caption beside it (its title and `sub` line from the block below); the **second click**
+— on the thing or on the caption's button — opens the full panel. Esc, or "← Back to my seat",
+walks you back. The bottom bar skips straight to the panel. The robot is the exception: its
+first click brings up the rock-paper-scissors buttons beside it.
 
-| Key | Line | You see it by clicking… |
-| --- | --- | --- |
-| `profile` | 4 | *(not shown directly — name/role used elsewhere)* |
-| `whiteboard` | 11 | The big whiteboard — your 5 research projects |
-| `leftboard` | 39 | The left board — "Hi, I'm Mason." |
-| `rightboard` | 50 | The right board — contact info |
-| `notebook` | 63 | The diary on the desk |
-| `textbook` | 74 | The textbook — publications & talks |
-| `laptop` | 85 | The laptop screen |
-| `pencil` | 92 | The pencil |
-| `mug` | 101 | The coffee mug |
-| `eraser` | 112 | The eraser |
-| `assignment` | 121 | Today's assignment — your thesis |
-| `bulletin` | 131 | The cork bulletin board |
-| `window` | 144 | The window |
-| `clock` | 154 | The clock on the back wall |
-| `globe` | 161 | The globe |
+How close you stand, the caption's look, and the button wording are per-object tables at the
+top of the "walking over to things" section in `app.js` (`VIEWS`, `PEEK_STYLE`, `PEEK_CTA`).
 
-### The whiteboard projects — `content.js:15–36`
+### The blocks, and how a visitor opens them
 
-This is the one you asked about. Five entries in an `items:` list. Each looks like:
+| Key | Opens from… |
+| --- | --- |
+| `profile` | *(not shown directly)* |
+| `whiteboard` | The big chalkboard, or **Research** in the bottom bar |
+| `leftboard` | The left board, or **About** |
+| `rightboard` | The ribbons on the right, or **Contact** |
+| `textbook` | The blue textbook, or **Publications** |
+| `assignment` | The sheet of paper on the teacher's desk, or **Thesis** |
+| `maker` | The rabbit or the robot on the side desk, or **Side projects** |
+| `bulletin` | **Experience** in the bottom bar (there is no object for it in the room) |
+| `notebook` | The diary on the desk |
+| `bookshelf` | The bookshelf on the right wall |
+| `laptop` | The laptop screen |
+| `pencil`, `mug`, `eraser`, `globe`, `window`, `clock` | The object of that name |
+
+The bottom bar and the previous/next buttons follow the `SECTIONS` list at the top of `app.js`.
+
+### Research projects — `whiteboard.items`
+
+Names only, on purpose — each entry says the project exists and where.
 
 ```js
-{ num: '01', title: 'Tools in CS Education — a systematic review',
-  meta: 'MadCSE Lab · 2025–present',
-  desc: 'Systematic analysis of 4,500+ research papers…',
-  link: 'Read the outline →' },
+{ num: '02', title: 'AI Tutor for Jupyter Notebooks',
+  lab: 'MadCSE Lab, UW–Madison', pi: 'Prof. Meenakshi Syamkumar', when: 'Aug 2025 – Jun 2026',
+  outcome: 'Full paper, SIGCSE TS 2027 (to appear)' },
 ```
 
-| Field | What it is | Example |
+| Field | What it is | Where it shows |
 | --- | --- | --- |
-| `num` | The number badge | `'01'` |
-| `title` | Project name | `'Robot Plan B'` |
-| `meta` | Lab · dates line | `'MAGIC Lab · 2025–present'` |
-| `desc` | The paragraph | `'Designing VR activities…'` |
-| `link` | The link label at the bottom | `'Study design →'` |
+| `num` | The number | Chalkboard + panel |
+| `title` | Project name — keep it short | Chalkboard + panel |
+| `lab`, `when` | Where and when | Chalkboard + panel |
+| `pi` | The PI | Panel |
+| `outcome` | Optional result line, e.g. a paper | Panel |
+| `href` + `link` | Optional real link and its label | Panel. **Leave `href` out and no link is shown.** |
 
-**To add a sixth project:** copy one whole `{ … }` block including its trailing comma,
-paste it after `05`, and change the fields. **To remove one:** delete the whole block.
-Renumber `num` so they stay in order.
+The chalkboard lists every project (up to ten, in two columns). Clicking it walks you up to
+read it; clicking again, or **Research** in the bottom bar, opens the panel. **To add a
+project:** copy a whole `{ … },` block, paste it, change the fields, and renumber `num`.
 
-Header text for the whiteboard is just above the list:
-- `kicker` line 12 — "The whiteboard · Research & projects"
-- `title` line 13 — "Things I've been working on"
-- `sub` line 14 — "A snapshot of my current research…"
+### About — `leftboard`
+
+- `body` — paragraphs (each string is one paragraph).
+- `education` — the list under the paragraphs: `school`, `when`, `degree`, optional `notes`.
+- `board` — the three chalk lines painted on the 3D board itself: `line1`, `line2`, and `tags`.
+  Keep them short; long lines run off the board.
+
+### Publications — `textbook.pubs`
+
+`tag` (e.g. `'C1'`), `authors` (wrap your name in `<strong>…</strong>`), `title`, `venue`,
+and optional `href` + `link`.
+
+### Thesis — `assignment`
+
+`sub` holds the title and advisor. `body` (paragraphs) and `href` + `link` are supported but
+empty right now. `paper` is the handwritten lines on the 3D sheet (one string per line, about
+22 characters each).
+
+### Side projects — `maker`
+
+`rabbit` and `robot` each have `title`, `status`, and `desc`. `robot.cheatNote` is what the
+robot says after its first win. The game's wording ("Paper covers rock…")
+is in `app.js` — search for `WHY`.
+
+### Experience — `bulletin.items`
+
+`kind` (Teaching / Industry / Service / Honor), `title`, `org`, `meta` (dates). An optional
+`desc` sentence is supported but none are used right now.
+
+### Contact — `rightboard.contacts`
+
+```js
+{ label: 'Email', val: 'bingyxdong@gmail.com', href: 'mailto:bingyxdong@gmail.com', icon: 'email' },
+```
+
+`label` = row name, `val` = visible text, `href` = where it goes, `icon` = `email`, `github`,
+`linkedin`, `website` or `cv`. **Change `val` and `href` together.** These also become the
+ribbons on the wall (up to five are drawn).
+
+### Favorite books — `bookshelf`
+
+Click the bookshelf in the room. Add books to `books`:
+
+```js
+{ title: 'Book title', author: 'Author', note: 'One line on why (optional)' },
+```
+
+While `books` is empty the panel shows the `empty` sentence instead.
 
 ### Text-list blocks — `body: [ … ]`
 
-`leftboard`, `pencil`, `mug`, `eraser`, `assignment`, `window`, `clock`, `globe` all use a
-`body:` array. **Each string is one paragraph.** Add a paragraph by adding a
-`'new string',` on its own line. That's it.
+`pencil`, `mug`, `eraser`, `window`, `clock`, `globe` all use a `body:` array. **Each string is
+one paragraph.** You can use `<strong>…</strong>` inside.
 
-The clock's is a single line you may want to make your own — `content.js:158`:
-> `'You are not late. You are not early. You are right on time.'`
+### Other lists
 
-### Contacts — `content.js:54–59`
-
-```js
-{ label: 'Email', val: 'bingyxdong@gmail.com', href: 'mailto:bingyxdong@gmail.com' },
-```
-
-`label` = row name, `val` = the visible text, `href` = where it actually goes. **Change
-both `val` and `href` together** or the link will point somewhere wrong. LinkedIn on
-line 57 is currently `href: '#'` (a dead link) with "— coming soon" in the text.
-
-### Other list-shaped blocks
-
-- **Diary entries** — `content.js:67–71`. Fields: `date`, `title`, `excerpt`.
-- **Publications** — `content.js:78–82`. Fields: `date`, `title`, `venue`, `link`.
-- **Bulletin board** — `content.js:135–141`. Fields: `kind` (Honor/Teach/Service/Intern), `title`, `meta`.
+- **Diary entries** — `notebook.entries`: `date`, `title`, optional `excerpt`.
+- **Laptop demos** — `laptop.demos`: `title`, `meta`, optional `desc`, `href`, `link`.
 
 ### Quoting gotcha
 
-Strings are wrapped in `'single quotes'`. If your text contains an apostrophe, either
-escape it (`'I\'ve been'`) or wrap the whole thing in double quotes (`"I've been"`).
-Both styles are already used in the file. Get this wrong and the page goes blank.
+Strings are wrapped in `'single quotes'`. If your text contains an apostrophe, either escape
+it (`'I\'ve been'`) or wrap the whole thing in double quotes (`"I've been"`). Get this wrong
+and the classroom never loads — open the browser console (`Cmd+Option+J`) and it names the line.
 
 ---
 
-# Part 2 — `index.html` (intro screen + on-screen chrome)
+# Part 2 — `old/index.html` (the standard CV)
 
-### The opening card (the chalkboard loader)
+Plain HTML, top to bottom in the order you see it, built like a typical academic homepage:
 
-Search for these strings — the card now animates in (self-drawing sketch, lettered
-title, pencil progress line):
+1. **Hero** — photo, a two-paragraph bio ("I work with …; previously …"), a few topic tags,
+   and "CV available on request".
+2. **Publications**
+3. **Projects** — the rabbit, the robot, MathVisual.
+4. **Background** — Education, Research, Teaching & work, Honors: one line each, names only.
+5. **Contact**
 
-| What | Where |
+Search for the text you want to change and edit it in place.
+
+- **Add a line to Background:** copy an `<li class="entry-row">` block inside the right list.
+  The small second line is the `<span class="row-sub">`.
+- **Add a personal project:** copy a `project-card` `<article>` in the Projects section.
+- **Styles** are in `old/css/style.css`; the nav highlighting uses the `sections` list in
+  `old/js/main.js` — add a section's id there if you add a section.
+
+---
+
+# Part 3 — `index.html` (first page + on-screen buttons)
+
+### The first page
+
+Two cards side by side — search for `class="choices"`:
+
+| What | Search for |
 | --- | --- |
-| `· the interactive cv of ·` — the small kicker | `index.html`, search for `intro-kicker` |
-| `The Classroom` — the title, **one `<span>` per letter** | search for `intro-title` |
-| Name + role line under the title | search for `intro-name` |
-| The **"Work in progress"** disclaimer | search for `intro-disclaimer` — delete the div to remove it |
-| `Class begins in 8s…` — the countdown text | `index.html:529` |
-| `Enter the Classroom →` / `Résumé (PDF) ↓` / `Standard CV site ↗` buttons | search for `intro-options` |
-| The chalk sketch that draws itself | the `intro-sketch` SVG — each `<path>` is one stroke; `animation-delay` sets draw order |
+| Your name and the line under it | `intro-head-name`, `intro-head-role` |
+| "One CV, two ways to read it" | `intro-q` |
+| Left card (the classroom): tag, title, description, the three facts, button | `choice-room` |
+| Right card (the standard CV): same parts | `choice-pro` |
+| The **"Work in progress"** line | `intro-disclaimer` — delete the `<p>` to remove it |
 
-The countdown also gets rewritten live by **`app.js:87`** — change the wording in *both*
-places or it'll flip after one second. Its **length** is `INTRO_SECS` at **`app.js:52`**
-(currently `8`), not the HTML. The pencil + chalk line are driven from the same spot in
-`app.js` (`introLine` / `introPencil`).
+A link to `bingyixuan.com/#room` skips this page and goes straight into the classroom.
 
-After editing `app.js`, `scene.js`, or `content.js`, bump the `?v=` number on the three
-script tags at **`index.html:647–649`** — browsers cache those files hard, and without the
-bump you'll keep seeing the old behaviour.
+### On-screen buttons in the classroom
 
-### On-screen HUD
-
-| Text | Where |
+| Text | Search for |
 | --- | --- |
-| `📄 Résumé` chip (links to `cv.html`) | `index.html:550` |
-| `Skip the scene →` | `index.html:551` |
-| `Move your mouse to look around · click anything that glows` | search for `id="hint"` |
-| `◎ recenter` / `🔇 ambient` (toggle also at **`app.js`**, search `soundBtn`) | search for `hud br` |
+| `Standard CV →` (top right) | `hud tr` |
+| `Click anything to walk over to it · click again for more · drag to look around` | `id="hint"` (the touch-screen wording is in `app.js`, search `isTouch`) |
+| `◎ recenter`, `← Back to my seat` | `recenterBtn`, `seatBtn` |
+| The bottom bar (About · Research · …) | `SECTIONS` at the top of `app.js` |
 
-### Browser tab title — `index.html:14`
+### Browser tab title
 
-`<title>Bingyixuan (Mason) Dong — CV · The Classroom</title>` (+ a `<meta name="description">` just below)
+`<title>` near the top of `index.html`, plus the `<meta name="description">` just below.
 
 ### Hover labels
 
-The little tooltip when you hover an object. These are in `scene.js`, one line each:
-
-| Line | Label |
-| --- | --- |
-| 795 | `Projects` (the board itself; per-project labels come from `content.js` titles) |
-| 880 | `About me` |
-| 1024 | `Today's assignment` (thesis paper on the teacher's desk) |
-| 1297 | `Open the diary` |
-| 1351 | `Publications & talks` |
-| 1538 | `Open live demo` |
-| 1553 | `A fun fact` |
-| 1612 | `Current rotation` |
-| 1639 | `Things I changed my mind about` |
-| 1784 | `Where I've been` |
-| 2172 | `Out the window` |
-| 2260 | `The clock` |
-
-### Plain-text CV page
-
-Headings only (About, Research & projects, Honors thesis, Diary, …). The content
-underneath is **generated from `content.js`**, so you don't edit it twice. The intro
-paragraph is hardcoded — search for `fb-lede`.
+The little tooltip when you hover an object. In `scene.js`, search for `userData.label` —
+one line per object. The rabbit's and robot's are in `sidedesk.js`.
 
 ---
 
-# Part 3 — `scene.js` (words painted on 3D objects)
+# Part 4 — `scene.js` (words painted on 3D objects)
 
-These are drawn into canvas textures, so they're inside JavaScript drawing code. Change
-the string, save, hard-refresh.
+These are drawn into canvas textures, so they live inside drawing code. Search for the
+string, change it, save, hard-refresh.
 
-### Wall posters — `scene.js:2016–2017`
+| What | Search for |
+| --- | --- |
+| Chalkboard header | `'RESEARCH'` (the title and the list come from `content.js`) |
+| Left board fixed words | `ABOUT ME`, `Hi, I'm`, `Mason.`, `click for more` (the role lines and tags come from `content.js` → `leftboard.board`) |
+| Wall posters | `makePoster(` — each word goes on its own line, keep to 3–4 words |
+| Pennants on the left wall | `makePennant(` — `'WISC'` and `'UW'`; short words only |
+| Textbook cover | `'Publications'` |
+| Diary cover | `'Diary'` |
+| Thesis sheet heading | `Turned in` (the lines below it come from `content.js` → `assignment.paper`) |
+| Laptop screen mock-up | `course-audit` |
 
-```js
-makePoster(roomW/2 - 0.02, 2.1, 0.2, -Math.PI/2, 'Be Curious Ask Often', 0x2f5d8f);
-makePoster(roomW/2 - 0.02, 2.1, 1.6, -Math.PI/2, 'Show Your Work',      0xc2583a);
-```
-
-The quoted string is the poster text — **each word goes on its own line**, so keep them
-short (3–4 words max). The `0x…` at the end is the accent color. The subtitle
-`— classroom rules —` is at **line 1990**.
-
-### Pennants on the left wall — `scene.js:1955–1956`
-
-`'WISC'` and `'UW'`. Short words only — long ones overflow the triangle.
-
-### Whiteboard header painted on the board — `scene.js:135`
-
-`'TODAY · WHAT I'M WORKING ON'` — this is the text *on the 3D board itself*, separate
-from the panel that opens when you click it. The five project cards on the board are
-generated from `content.js` (titles, meta, and descriptions truncate with `…`).
-
-### Left board painted text — `scene.js:245–296`
-
-`'· ABOUT ME ·'`, `"Hi, I'm"`, `'Mason.'`, `'CS & Data Science'`,
-`'UW–Madison · AI & Education'`, `'click for more →'`.
-
-### Textbook spine — `scene.js:426–437`
-
-`'Publications'` / `'& talks'` / `'B. Dong'` / `'2024 — present'`
-
-### Diary cover — `scene.js:1244`
-
-`'Diary'` / `'— field notes —'` / `'MMXXVI'`
-
-### Thesis paper on the teacher's desk
-
-Painted by `paperTexture()` (search for `Honors thesis:` in `scene.js`). Clicking it
-opens the `assignment` panel from `content.js`.
-
-### Laptop screen
-
-`laptopScreenTexture()` draws a mock of the course-audit agent (transcript on the left,
-objective-coverage bars on the right). Search for `course-audit` in `scene.js`.
-
-### Bulletin board
-
-Removed from the room (the back wall is now bare). The honors & teaching content still
-renders on the plain-text CV page from `content.js` → `bulletin.items`; the
-`bulletinTexture()` function is kept in `scene.js` in case it returns.
-
-### The living details
-
-The goldfish bowl (teacher's desk), the solar-system mobile (ceiling, right side), the
-spinning globe, and the paper airplane that periodically flies across the room and
-misses the trash can are all in `scene.js` — search for `goldfish`, `mobile`,
-`the globe turns`, and `paper-airplane sortie`.
+The living details — goldfish, solar-system mobile, spinning globe, the paper airplane that
+misses the trash can — are also in `scene.js`: search `goldfish`, `mobile`, `the globe turns`,
+`paper-airplane sortie`. The rabbit's hopping and the robot's hands are in `sidedesk.js`.
 
 ---
 
@@ -245,29 +245,34 @@ misses the trash can are all in `scene.js` — search for `goldfish`, `mobile`,
 
 ### 1. Bump the cache version — required for JS edits
 
-If you changed **`content.js`, `scene.js`, or `app.js`**, open `index.html` lines
-**647–649** and bump all three:
+If you changed **`content.js`, `sidedesk.js`, `scene.js`, or `app.js`**, open `index.html`,
+go to the `<script src=…>` lines near the bottom, and bump all four numbers together:
 
 ```html
-<script src="content.js?v=36"></script>   →   ?v=37
-<script src="scene.js?v=36"></script>     →   ?v=37
-<script src="app.js?v=36"></script>       →   ?v=37
+<script src="content.js?v=39"></script>    →   ?v=40
+<script src="sidedesk.js?v=39"></script>   →   ?v=40
+<script src="scene.js?v=39"></script>      →   ?v=40
+<script src="app.js?v=39"></script>        →   ?v=40
 ```
 
-Skip this and returning visitors keep seeing the old version. Not needed for
-`index.html` edits.
+Skip this and returning visitors keep seeing the old version. Not needed for HTML-only edits.
 
-### 2. Preview, then publish
+### 2. The CV
+
+The CV is **not on the site**. `cv.html` is a small "CV available on request" page (old links
+to it still land somewhere sensible), and the PDF files were removed. To post a CV again
+later, add the file and link to it from `old/index.html` and `content.js` → `rightboard.contacts`.
+
+### 3. Preview, then publish
 
 ```bash
 python3 -m http.server 8000     # then open http://localhost:8000
 ```
 
-Hard-refresh with `Cmd+Shift+R`. If the page is blank, you broke a quote or comma —
-open the browser console (`Cmd+Option+J`) and it'll name the line.
+Hard-refresh with `Cmd+Shift+R`.
 
 ```bash
-git add -A && git commit -m "Update whiteboard projects" && git push
+git add -A && git commit -m "Update research projects" && git push
 ```
 
 See `RUNNING.md` for the full command reference.
@@ -278,19 +283,17 @@ See `RUNNING.md` for the full command reference.
 
 | I want to change… | Go to |
 | --- | --- |
-| A research project | `content.js:15–36` |
-| My bio paragraphs | `content.js:43–47` |
-| Email / GitHub / LinkedIn | `content.js:54–59` |
-| Diary entries | `content.js:67–71` |
-| Publications | `content.js:78–82` |
-| Honors & teaching | `content.js:135–141` |
-| Thesis description | `content.js:121–129` |
-| Intro screen title | `index.html` — search `intro-title` |
-| The "Work in progress" notice | `index.html` — search `intro-disclaimer` |
-| Intro buttons | `index.html` — search `intro-options` |
-| The mouse hint | `index.html` — search `id="hint"` |
-| Browser tab title | `index.html:14` |
-| Wall poster slogans | `scene.js:2016–2017` |
-| Pennant text (WISC / UW) | `scene.js:1955–1956` |
-| Hover tooltips | `scene.js` — see table above |
-| Bulletin cards (honors & teaching) | `content.js` → `bulletin.items` |
+| A research project name | `content.js` → `whiteboard.items` (classroom) · Background list in `old/index.html` |
+| My bio | `content.js` → `leftboard.body` **and** the hero in `old/index.html` |
+| Education | `content.js` → `leftboard.education` **and** `old/index.html` (Background) |
+| Publications | `content.js` → `textbook.pubs` **and** `old/index.html` |
+| The rabbit / robot descriptions | `content.js` → `maker` **and** `old/index.html` (Projects) |
+| Teaching, jobs, honors | `content.js` → `bulletin.items` **and** `old/index.html` (Background) |
+| Email / GitHub / LinkedIn | `content.js` → `rightboard.contacts` **and** `old/index.html` + `old/js/main.js` (email) |
+| Favorite books | `content.js` → `bookshelf.books` |
+| Diary entries | `content.js` → `notebook.entries` |
+| The first page | `index.html` — search `choices` |
+| The "Work in progress" line | `index.html` — search `intro-disclaimer` |
+| Browser tab title | `index.html` `<title>` |
+| Wall poster slogans, pennants | `scene.js` — `makePoster(`, `makePennant(` |
+| Hover tooltips | `scene.js` / `sidedesk.js` — `userData.label` |

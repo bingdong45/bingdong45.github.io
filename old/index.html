@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mason Dong — CS Researcher</title>
-  <meta name="description" content="Bingyixuan (Mason) Dong — Computer Science researcher specializing in AI-powered education technology." />
+  <title>Mason Dong — Master’s Student in Computer Science, Cornell University</title>
+  <meta name="description" content="Bingyixuan (Mason) Dong — master’s student in Computer Science at Cornell University, interested in how people use, rely on, and trust large language models." />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0DX00SNE6S"></script>
   <script>
@@ -25,12 +25,13 @@
   <header class="navbar" id="navbar">
     <div class="nav-inner container">
       <a href="#hero" class="nav-logo">Mason Dong</a>
-      <nav class="nav-links">
-        <a href="#hero"     class="nav-link" data-section="hero">About</a>
-        <a href="#projects" class="nav-link" data-section="projects">Projects</a>
-        <a href="#contact"  class="nav-link" data-section="contact">Contact</a>
-        <a href="../cv" class="nav-cta" target="_blank">CV</a>
-        <a href="../" class="nav-cta" style="background:transparent;border:1px solid currentColor;margin-left:6px;">← Classroom</a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#hero"         class="nav-link" data-section="hero">About</a>
+        <a href="#publications" class="nav-link" data-section="publications">Publications</a>
+        <a href="#projects"     class="nav-link" data-section="projects">Projects</a>
+        <a href="#background"   class="nav-link" data-section="background">Background</a>
+        <a href="#contact"      class="nav-link" data-section="contact">Contact</a>
+        <a href="../#room" class="nav-cta nav-cta-outline">Interactive classroom →</a>
       </nav>
       <button class="nav-hamburger" id="hamburger" aria-label="Toggle menu">
         <span></span><span></span>
@@ -38,11 +39,12 @@
     </div>
     <!-- mobile drawer -->
     <div class="nav-drawer" id="nav-drawer">
-      <a href="#hero"     class="drawer-link" data-section="hero">About</a>
-      <a href="#projects" class="drawer-link" data-section="projects">Projects</a>
-      <a href="#contact"  class="drawer-link" data-section="contact">Contact</a>
-      <a href="../cv" class="drawer-link" target="_blank">CV</a>
-      <a href="../" class="drawer-link">← Back to Classroom</a>
+      <a href="#hero"         class="drawer-link" data-section="hero">About</a>
+      <a href="#publications" class="drawer-link" data-section="publications">Publications</a>
+      <a href="#projects"     class="drawer-link" data-section="projects">Projects</a>
+      <a href="#background"   class="drawer-link" data-section="background">Background</a>
+      <a href="#contact"      class="drawer-link" data-section="contact">Contact</a>
+      <a href="../#room" class="drawer-link">Interactive classroom →</a>
     </div>
   </header>
 
@@ -53,24 +55,20 @@
         <p class="hero-greeting">Hello, I'm</p>
         <h1>Bingyixuan<br><em>(Mason) Dong</em></h1>
         <div class="hero-rule"></div>
-        <p class="hero-subtitle">CS Researcher &middot; AI-powered Education Technology</p>
-        <p class="hero-desc">Exploring the computational foundations of reliable, personalized, and cognitively engaging AI for education.</p>
+        <p class="hero-subtitle">Master’s student in Computer Science &middot; Cornell University</p>
+        <p class="hero-desc">I’m a master’s student at Cornell, working with Prof. René F. Kizilcec. I’m interested in how people use, rely on, and come to trust large language models.</p>
+        <p class="hero-desc">Previously I was at UW–Madison, where I worked with Prof. Bilge Mutlu.</p>
         <div class="hero-tags">
-          <span class="tag">Personalized AI</span>
+          <span class="tag">LLM Reliance &amp; Trust</span>
+          <span class="tag">Human–AI Collaboration</span>
           <span class="tag">AI in Education</span>
-          <span class="tag">LLM Applications</span>
-          <span class="tag">Hallucination Reduction</span>
-          <span class="tag">HRI</span>
-          <span class="tag">VR</span>
-          <span class="tag">NLP</span>
+          <span class="tag">HCI</span>
         </div>
         <div class="hero-actions">
-          <a href="../cv" class="btn btn-primary" target="_blank">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Curriculum Vitae
-          </a>
-          <a href="#projects" class="btn btn-ghost">View Projects</a>
+          <a href="#contact" class="btn btn-primary">Get in touch</a>
+          <a href="#publications" class="btn btn-ghost">Publications</a>
         </div>
+        <p class="hero-note">CV available on request.</p>
       </div>
       <div class="hero-portrait reveal reveal-delay-1">
         <div class="portrait-frame">
@@ -84,20 +82,84 @@
     </div>
   </section>
 
+  <!-- ── PUBLICATIONS ──────────────────────────── -->
+  <section class="section" id="publications">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-label">Peer-reviewed</p>
+        <h2>Publications</h2>
+      </div>
+
+      <ol class="pub-list">
+        <li class="pub reveal">
+          <span class="pub-key">[C1]</span>
+          <div class="pub-body">
+            <h3 class="pub-title">What Do Students Ask LLM Programming Assistants For? A Large-Scale Problem-Level Analysis of Student Interactions</h3>
+            <p class="pub-authors">
+              Yiyin Shen, <strong>Bingyixuan Dong</strong>, Louis Oliphant, Matthew Berland,
+              Meenakshi Syamkumar, and Andrea C. Arpaci-Dusseau.
+            </p>
+            <p class="pub-venue">
+              <em>Proceedings of the 58th ACM Technical Symposium on Computer Science Education (SIGCSE TS 2027).</em>
+            </p>
+            <p class="pub-status"><span class="status-tag">Full paper, to appear</span></p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
   <!-- ── PROJECTS ──────────────────────────────── -->
   <section class="section" id="projects">
     <div class="container">
       <div class="section-header reveal">
-        <p class="section-label">Selected Work</p>
+        <p class="section-label">Personal &amp; side projects</p>
         <h2>Projects</h2>
       </div>
 
       <div class="projects-grid">
 
-        <!-- MathVisual -->
+        <!-- AI Rabbit -->
         <article class="project-card reveal" data-num="01">
           <div class="project-card-inner">
             <div class="project-num">01</div>
+            <div class="project-body">
+              <div class="project-meta">
+                <span class="project-tag project-tag-status">In progress</span>
+                <span class="project-tag">Personal project</span>
+              </div>
+              <h3 class="project-title">AI Rabbit</h3>
+              <p class="project-desc">
+                A personal project: a rabbit with an AI built into it.
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Rock-Paper-Scissors Robot -->
+        <article class="project-card reveal" data-num="02">
+          <div class="project-card-inner">
+            <div class="project-num">02</div>
+            <div class="project-body">
+              <div class="project-meta">
+                <span class="project-tag project-tag-status">In progress</span>
+                <span class="project-tag">Personal project</span>
+              </div>
+              <h3 class="project-title">Rock-Paper-Scissors Robot</h3>
+              <p class="project-desc">
+                A small robot I am building that plays rock-paper-scissors with you.
+              </p>
+              <div class="project-footer">
+                <a href="../#room" class="text-link">Play the demo in the classroom <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- MathVisual -->
+        <article class="project-card reveal" data-num="03">
+          <div class="project-card-inner">
+            <div class="project-num">03</div>
             <div class="project-body">
               <div class="project-meta">
                 <span class="project-tag">AI</span>
@@ -106,10 +168,6 @@
               </div>
               <h3 class="project-title">MathVisual</h3>
               <p class="project-subtitle">AI-Generated Math Animations</p>
-              <p class="project-desc">
-                Type any mathematical concept in plain English — the AI generates a custom
-                Manim animation and renders it into a video. Built with React, FastAPI, and PostgreSQL.
-              </p>
               <div class="project-footer">
                 <a href="../mathvisual/" target="_blank" rel="noopener noreferrer" class="btn btn-primary project-btn">
                   View Live Demo
@@ -127,13 +185,95 @@
     </div>
   </section>
 
+  <!-- ── BACKGROUND: education, research, work, honors — names only ── -->
+  <section class="section" id="background">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-label">In brief</p>
+        <h2>Background</h2>
+      </div>
+
+      <div class="cv-group reveal">
+        <h3 class="cv-subhead">Education</h3>
+        <ul class="award-list brief-list">
+          <li class="entry-row">
+            <span class="award-name">Cornell University <span class="row-sub">Master of Engineering in Computer Science</span></span>
+            <span class="entry-meta">Expected May 2027</span>
+          </li>
+          <li class="entry-row">
+            <span class="award-name">University of Wisconsin–Madison <span class="row-sub">B.S. in Computer Sciences (Honors) and Data Science</span></span>
+            <span class="entry-meta">May 2026</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="cv-group reveal">
+        <h3 class="cv-subhead">Research</h3>
+        <ul class="award-list brief-list">
+          <li class="entry-row">
+            <span class="award-name">LearnLab, Carnegie Mellon University <span class="row-sub">Summer Researcher</span></span>
+            <span class="entry-meta">Summer 2026</span>
+          </li>
+          <li class="entry-row">
+            <span class="award-name">Honors thesis research, UW–Madison <span class="row-sub">Advisor: Prof. Bilge Mutlu</span></span>
+            <span class="entry-meta">2025 – 2026</span>
+          </li>
+          <li class="entry-row">
+            <span class="award-name">MadCSE Lab, UW–Madison <span class="row-sub">Undergraduate Research Assistant</span></span>
+            <span class="entry-meta">2025 – 2026</span>
+          </li>
+          <li class="entry-row">
+            <span class="award-name">MAGIC Lab, UW–Madison <span class="row-sub">Undergraduate Research Assistant</span></span>
+            <span class="entry-meta">2025 – 2026</span>
+          </li>
+          <li class="entry-row">
+            <span class="award-name">People and Robots Laboratory, UW–Madison <span class="row-sub">Undergraduate Research Assistant</span></span>
+            <span class="entry-meta">2025</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="cv-group reveal">
+        <h3 class="cv-subhead">Teaching &amp; work</h3>
+        <ul class="award-list brief-list">
+          <li class="entry-row">
+            <span class="award-name">Peer Mentor, CS 639 <span class="row-sub">UW–Madison Department of Computer Sciences</span></span>
+            <span class="entry-meta">Spring 2024, Spring 2025</span>
+          </li>
+          <li class="entry-row">
+            <span class="award-name">Software Engineering Intern <span class="row-sub">CrissCross Express</span></span>
+            <span class="entry-meta">Summers 2023 &amp; 2024</span>
+          </li>
+          <li class="entry-row">
+            <span class="award-name">Advisory Board Member <span class="row-sub">UW–Madison University Housing</span></span>
+            <span class="entry-meta">2023 – 2024</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="cv-group reveal">
+        <h3 class="cv-subhead">Honors</h3>
+        <ul class="award-list brief-list">
+          <li class="entry-row">
+            <span class="award-name">Dean’s List <span class="row-sub">University of Wisconsin–Madison</span></span>
+            <span class="entry-meta">2024</span>
+          </li>
+          <li class="entry-row">
+            <span class="award-name">President’s Silver Volunteer Service Award</span>
+            <span class="entry-meta">2022</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
   <!-- ── CONTACT ───────────────────────────────── -->
   <section class="section section-contact" id="contact">
     <div class="container contact-container">
       <div class="contact-text reveal">
         <p class="section-label">Contact</p>
         <h2>Let's Connect</h2>
-        <p class="contact-desc">Open to research collaborations, new projects, and opportunities in AI and education.</p>
+        <p class="contact-desc">Open to research collaborations and new projects. My CV is available on request — just email me.</p>
       </div>
       <div class="contact-links reveal reveal-delay-1">
         <button class="contact-link" id="email-reveal" onclick="revealEmail()">
